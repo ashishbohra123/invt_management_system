@@ -1,0 +1,53 @@
+{
+  "timestamp": "2026-06-26T09:30:10.365Z",
+  "app": "Inventory Management System - Admin Portal",
+  "module": "UserFormModal",
+  "apiTests": [
+    {
+      "name": "GET /api/users",
+      "status": "pass"
+    },
+    {
+      "name": "POST /api/users (create)",
+      "status": "pass"
+    },
+    {
+      "name": "PUT /api/users/:id (update)",
+      "status": "pass"
+    },
+    {
+      "name": "DELETE /api/users/:id",
+      "status": "pass"
+    }
+  ],
+  "screenshots": [
+    "01-user-list.png",
+    "02-create-modal-empty.png",
+    "03-validation-errors.png",
+    "04-create-modal-filled.png",
+    "05-success-toast.png",
+    "06-edit-modal.png",
+    "07-inline-validation-error.png"
+  ],
+  "components": {
+    "UserFormModal": {
+      "file": "src/admin-portal/src/pages/Users/UserFormModal.tsx",
+      "features": [
+        "Create: name, email, password, role, portal access (checkboxes), active toggle",
+        "Edit: pre-filled, password hidden, PUT /api/users/:id",
+        "Validation: required fields, isValidEmail, password min 6, portal required",
+        "Toast: success (green, 3s) and error (red, 3s) via inline state",
+        "Roles from @moc/shared Role enum, portals from PortalType enum"
+      ]
+    },
+    "UserList": {
+      "changes": [
+        "Inline modal → + New User, Edit per row",
+        "onSave → fetchUsers refresh"
+      ]
+    },
+    "App": {
+      "changes": "Removed /users/new, /users/:id/edit routes"
+    }
+  }
+}
