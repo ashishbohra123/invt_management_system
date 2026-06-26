@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
-import { UserList, UserForm } from "./pages/Users/index.js";
+import { UserList } from "./pages/Users/index.js";
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -23,8 +23,6 @@ export function App() {
       <Routes>
         <Route path="/" element={<Layout><h1>Dashboard</h1><p>Welcome to the admin portal.</p></Layout>} />
         <Route path="/users" element={<Layout><UserList /></Layout>} />
-        <Route path="/users/new" element={<Layout><UserForm /></Layout>} />
-        <Route path="/users/:id/edit" element={<Layout><UserForm /></Layout>} />
       </Routes>
     </BrowserRouter>
   );
