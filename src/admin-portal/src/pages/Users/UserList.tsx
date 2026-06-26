@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { UserFormModal } from "./UserFormModal";
 
 interface User {
   id: string;
@@ -7,6 +7,7 @@ interface User {
   email: string;
   role: string;
   status: "active" | "inactive";
+  portalAccess?: string[];
   createdAt: string;
 }
 
@@ -18,6 +19,8 @@ export function UserList() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const pageSize = 10;
 
   const fetchUsers = useCallback(async () => {
@@ -50,6 +53,21 @@ export function UserList() {
     }
   };
 
+  function openCreate() {
+    setEditingUser(null);
+    setModalOpen(true);
+  }
+
+  function openEdit(user: User) {
+    setEditingUser(user);
+    setModalOpen(true);
+  }
+
+  function closeModal() {
+    setModalOpen(false);
+    setEditingUser(null);
+  }
+
   return (
     <div>
       <h1>Users</h1>
@@ -61,9 +79,9 @@ export function UserList() {
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           style={{ padding: 8, width: 300 }}
         />
-        <Link to="/users/new" style={{ padding: "8px 16px", background: "#1976d2", color: "#fff", textDecoration: "none", borderRadius: 4 }}>
+        <button onClick={openCreate} style={newBtnStyle}>
           + New User
-        </Link>
+        </button>
       </div>
 
       {loading && <p>Loading...</p>}
@@ -97,8 +115,8 @@ export function UserList() {
                 </td>
                 <td style={tdStyle}>{new Date(user.createdAt).toLocaleDateString()}</td>
                 <td style={tdStyle}>
-                  <Link to={`/users/${user.id}/edit`} style={{ marginRight: 8 }}>Edit</Link>
-                  <button onClick={() => handleDelete(user.id)} style={{ color: "#d32f2f", border: "none", background: "none", cursor: "pointer" }}>
+                  <button onClick={() => openEdit(user)} style={editBtnStyle}>Edit</button>
+                  <button onClick={() => handleDelete(user.id)} style={deleteBtnStyle}>
                     Delete
                   </button>
                 </td>
@@ -113,6 +131,13 @@ export function UserList() {
         <span style={{ padding: "8px 0" }}>Page {page}</span>
         <button onClick={() => setPage((p) => p + 1)} style={btnStyle}>Next</button>
       </div>
+
+      <UserFormModal
+        open={modalOpen}
+        onClose={closeModal}
+        editUser={editingUser ? { ...editingUser, portalAccess: editingUser.portalAccess ?? [] } : null}
+        onSave={fetchUsers}
+      />
     </div>
   );
 }
@@ -120,3 +145,14 @@ export function UserList() {
 const thStyle: React.CSSProperties = { padding: 12, fontWeight: 600, borderBottom: "2px solid #e0e0e0" };
 const tdStyle: React.CSSProperties = { padding: 12 };
 const btnStyle: React.CSSProperties = { padding: "8px 16px", cursor: "pointer" };
+const newBtnStyle: React.CSSProperties = {
+  padding: "8px 16px", background: "#1976d2", color: "#fff",
+  border: "none", borderRadius: 4, cursor: "pointer", fontSize: 14,
+};
+const editBtnStyle: React.CSSProperties = {
+  marginRight: 8, color: "#1976d2", border: "none",
+  background: "none", cursor: "pointer", fontSize: 14,
+};
+const deleteBtnStyle: React.CSSProperties = {
+  color: "#d32f2f", border: "none", background: "none", cursor: "pointer", fontSize: 14,
+};
