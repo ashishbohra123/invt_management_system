@@ -39,7 +39,7 @@ Multi-portal inventory management application with an Express REST API, PostgreS
 ## Prerequisites
 
 - **Node.js** >= 18 (recommended: 20 LTS)
-- **pnpm** — Install with `npm install -g pnpm`
+- **npm** (ships with Node.js) or **pnpm** (optional — `npm install -g pnpm`)
 - **Docker** (optional — for PostgreSQL and containerized services)
 - **Git** — to clone the repository
 
@@ -53,6 +53,14 @@ cd invt_management_system
 ```
 
 ### 2. Install dependencies
+
+Using npm (recommended):
+
+```bash
+npm install
+```
+
+Or using pnpm (if installed):
 
 ```bash
 pnpm install
@@ -113,6 +121,12 @@ This creates the following tables:
 ### 6. Start the application
 
 ```bash
+npm run dev
+```
+
+Or using pnpm:
+
+```bash
 pnpm dev
 ```
 
@@ -136,20 +150,20 @@ curl http://localhost:3000/api/health
 
 Run from the project root:
 
-| Command              | Description                                |
-|----------------------|--------------------------------------------|
-| `pnpm dev`           | Start all services in development mode     |
-| `pnpm build`         | Build all packages for production          |
-| `pnpm lint`          | Type-check all packages                    |
-| `pnpm test`          | Run all tests                              |
-| `pnpm --filter @moc/server run dev` | Start only the API server     |
-| `pnpm --filter @moc/admin-portal run dev` | Start only Admin Portal |
+| Command                                    | Description                                |
+|--------------------------------------------|--------------------------------------------|
+| `npm run dev` or `npm start`               | Start all services in development mode     |
+| `npm run build`                            | Build all packages for production          |
+| `npm run lint`                             | Type-check all packages                    |
+| `npm run test`                             | Run all tests                              |
+| `npm run dev -w @moc/server`               | Start only the API server                  |
+| `npm run dev -w @moc/admin-portal`         | Start only Admin Portal                    |
 
 Per-package scripts (run from `src/<package>`):
 
-| Package         | `pnpm dev`                      | `pnpm build`      |
-|-----------------|---------------------------------|-------------------|
-| `@moc/server`   | `tsx watch src/index.ts`        | `tsc`             |
+| Package         | `npm run dev`                   | `npm run build`    |
+|-----------------|---------------------------------|--------------------|
+| `@moc/server`   | `tsx watch src/index.ts`        | `tsc`              |
 | `@moc/*-portal` | `vite`                          | `tsc && vite build` |
 
 ## Detailed Setup (Per Service)
@@ -158,7 +172,7 @@ Per-package scripts (run from `src/<package>`):
 
 ```bash
 cd src/server
-pnpm dev
+npm run dev
 ```
 
 The server starts on port 3000. Available API endpoints:
@@ -191,7 +205,7 @@ The server starts on port 3000. Available API endpoints:
 
 ```bash
 cd src/admin-portal
-pnpm dev
+npm run dev
 ```
 
 Opens at http://localhost:3001. Routes:
@@ -203,7 +217,7 @@ Opens at http://localhost:3001. Routes:
 
 ```bash
 cd src/partner-portal
-pnpm dev
+npm run dev
 ```
 
 Opens at http://localhost:3002. Routes:
@@ -216,7 +230,7 @@ Opens at http://localhost:3002. Routes:
 
 ```bash
 cd src/customer-portal
-pnpm dev
+npm run dev
 ```
 
 Opens at http://localhost:3003. Routes:
@@ -313,8 +327,9 @@ Edit `src/db/init.sql` and restart PostgreSQL. The schema auto-applies on Docker
 
 | Problem                          | Solution                                      |
 |----------------------------------|-----------------------------------------------|
-| `pnpm: command not found`        | Install pnpm: `npm install -g pnpm`           |
+| `npm run dev` not working        | Run `npm install` from project root first     |
+| `pnpm: command not found`        | Use `npm` instead (no pnpm required)          |
 | Port already in use              | Change the port in `.env` or `vite.config.ts` |
 | `ECONNREFUSED` on database       | Ensure PostgreSQL is running: `docker compose up postgres -d` |
 | Cross-origin errors              | Vite proxies `/api` to `localhost:3000` by default |
-| Missing shared package           | Run `pnpm install` from the project root      |
+| Missing shared package           | Run `npm install` from the project root      |

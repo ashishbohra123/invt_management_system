@@ -2,12 +2,17 @@
   "name": "invt-management-system",
   "version": "0.1.0",
   "private": true,
+  "workspaces": ["src/*"],
   "scripts": {
-    "dev": "pnpm --parallel -r run dev",
-    "build": "pnpm -r run build",
-    "lint": "pnpm -r run lint",
-    "test": "pnpm -r run test"
+    "dev": "concurrently -n server,admin,partner,customer -c blue,green,yellow,magenta \"npm run dev -w @moc/server\" \"npm run dev -w @moc/admin-portal\" \"npm run dev -w @moc/partner-portal\" \"npm run dev -w @moc/customer-portal\"",
+    "build": "npm run build -ws --if-present",
+    "lint": "npm run lint -ws --if-present",
+    "test": "npm run test -ws --if-present",
+    "start": "npm run dev"
   },
-  "devDependencies": { "typescript": "^5.5.0" },
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "typescript": "^5.5.0"
+  },
   "engines": { "node": ">=18" }
 }
