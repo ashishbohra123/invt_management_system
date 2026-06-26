@@ -1,0 +1,1 @@
+import { Router } from "express"; import { inventoryController } from "../controllers/inventoryController.js"; export const inventoryRouter = Router(); inventoryRouter.get("/", inventoryController.list); inventoryRouter.put("/:id", inventoryController.update);

@@ -1,0 +1,1 @@
+export const API_PATHS = { AUTH: { LOGIN: "/api/auth/login", REGISTER: "/api/auth/register" }, TENANTS: "/api/tenants", USERS: "/api/users", PRODUCTS: "/api/products", INVENTORY: "/api/inventory", ORDERS: "/api/orders", HEALTH: "/api/health" };

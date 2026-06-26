@@ -1,0 +1,1 @@
+import { Router } from "express"; import { orderController } from "../controllers/orderController.js"; export const orderRouter = Router(); orderRouter.get("/", orderController.list); orderRouter.post("/", orderController.create); orderRouter.put("/:id/approve", orderController.approve); orderRouter.put("/:id/cancel", orderController.cancel);

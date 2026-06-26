@@ -1,0 +1,13 @@
+{
+  "name": "invt-management-system",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel -r run dev",
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint",
+    "test": "pnpm -r run test"
+  },
+  "devDependencies": { "typescript": "^5.5.0" },
+  "engines": { "node": ">=18" }
+}

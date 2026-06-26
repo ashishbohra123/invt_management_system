@@ -1,0 +1,2 @@
+import type { Request, Response, NextFunction } from "express";
+export function responseHandler(_req: Request, res: Response, next: NextFunction): void { const original = res.json.bind(res); res.json = function (body: unknown) { if (body && typeof body === "object" && "success" in (body as Record<string, unknown>)) return original(body); return original({ success: true, data: body }); }; next(); }

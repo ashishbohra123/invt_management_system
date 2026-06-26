@@ -1,0 +1,1 @@
+import { Router } from "express"; import { tenantController } from "../controllers/tenantController.js"; export const tenantRouter = Router(); tenantRouter.get("/", tenantController.list); tenantRouter.post("/", tenantController.create); tenantRouter.put("/:id", tenantController.update); tenantRouter.delete("/:id", tenantController.delete);
