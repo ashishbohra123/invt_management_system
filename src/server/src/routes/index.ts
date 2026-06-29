@@ -1,2 +1,21 @@
-import { Router } from "express"; import { healthRouter } from "./health.js"; import { authRouter } from "./auth.js"; import { tenantRouter } from "./tenants.js"; import { userRouter } from "./users.js"; import { productRouter } from "./products.js"; import { inventoryRouter } from "./inventory.js"; import { orderRouter } from "./orders.js";
-export const router = Router(); router.use("/health", healthRouter); router.use("/auth", authRouter); router.use("/tenants", tenantRouter); router.use("/users", userRouter); router.use("/products", productRouter); router.use("/inventory", inventoryRouter); router.use("/orders", orderRouter);
+import { Router } from "express";
+import swaggerUi from "swagger-ui-express";
+import { healthRouter } from "./health.js";
+import { authRouter } from "./auth.js";
+import { tenantRouter } from "./tenants.js";
+import { userRouter } from "./users.js";
+import { productRouter } from "./products.js";
+import { inventoryRouter } from "./inventory.js";
+import { orderRouter } from "./orders.js";
+import { openApiSpec } from "../config/swagger.js";
+
+export const router = Router();
+router.use("/health", healthRouter);
+router.use("/auth", authRouter);
+router.use("/tenants", tenantRouter);
+router.use("/users", userRouter);
+router.use("/products", productRouter);
+router.use("/inventory", inventoryRouter);
+router.use("/orders", orderRouter);
+router.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec));
+router.get("/openapi.json", (_req, res) => { res.json(openApiSpec); });
