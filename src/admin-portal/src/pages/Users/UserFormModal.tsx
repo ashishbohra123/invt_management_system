@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useRef, type FormEvent } from "react";
 import { Role, PortalType, isValidEmail } from "@moc/shared";
 
 const USERS_PATH = "/api/users";
@@ -46,7 +46,13 @@ const initialForm = {
 
 export function UserFormModal({ open, onClose, editUser, onSave }: UserFormModalProps) {
   const isEdit = Boolean(editUser);
+  const mountedRef = useRef(true);
   const [form, setForm] = useState(initialForm);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [toast, setToast] = useState<Toast | null>(null);
@@ -114,7 +120,7 @@ export function UserFormModal({ open, onClose, editUser, onSave }: UserFormModal
       });
       if (!res.ok) throw new Error(`Failed to ${isEdit ? "update" : "create"} user`);
       setToast({ type: "success", message: `User ${isEdit ? "updated" : "created"} successfully` });
-      setTimeout(() => { onSave(); onClose(); }, 800);
+      setTimeout(() => { if (mountedRef.current) { onSave(); onClose(); } }, 800);
     } catch (err) {
       setToast({ type: "error", message: err instanceof Error ? err.message : "Operation failed" });
     } finally {
