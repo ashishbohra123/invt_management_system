@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { tenantsService, type Tenant } from "@moc/shared";
 import { TenantFormModal } from "./TenantFormModal";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
@@ -11,7 +11,6 @@ export function TenantList() {
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Tenant | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
 
   const fetchTenants = useCallback(async () => {
     setLoading(true);
