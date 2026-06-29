@@ -80,6 +80,16 @@ JWT_EXPIRY=20m         # Token lifetime
 
 ### 4. Start the API server
 
+**Option A — Start all services (recommended):**
+
+```bash
+npm run dev
+```
+
+This starts the API server, Admin Portal, Partner Portal, and Customer Portal in parallel using `concurrently`. The API server boots on port 3000, automatically creates the database and schema on first run, then starts accepting requests. Equivalent to `npm start`.
+
+**Option B — Start the API server only:**
+
 ```bash
 npm run dev -w @moc/server
 ```
@@ -117,6 +127,8 @@ Response:
 ```
 
 If this fails, check that PostgreSQL is running and the config in `.env` is correct.
+
+> **Tip:** `npm start` is an alias for `npm run dev` — both commands start the full stack with auto-sync.
 
 ## How the API Connects to the Database
 
@@ -275,7 +287,15 @@ ensureDatabase().then(() => app.listen(...))
 1. **Create database** — Connects to the `postgres` admin database and runs `CREATE DATABASE IF NOT EXISTS` (checked via `pg_database` catalog)
 2. **Sync schema** — Reads `src/db/init.sql` and executes it against the target database. All tables use `CREATE TABLE IF NOT EXISTS`, so repeated runs are safe.
 
-No manual `createdb` or `psql -f` steps needed for local development — just start PostgreSQL and run the server.
+No manual `createdb` or `psql -f` steps needed for local development — just start PostgreSQL and run:
+
+```bash
+# Full stack (server + portals)
+npm run dev
+
+# Server only
+npm run dev -w @moc/server
+```
 
 ### Entity relationships
 
