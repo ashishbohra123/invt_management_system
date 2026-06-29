@@ -210,8 +210,8 @@ npm run dev
 
 Opens at http://localhost:3001. Routes:
 - `/` — Dashboard
-- `/tenants` — Tenant management
-- `/users` — User management
+- `/users` — User management (CRUD with search, pagination, role/portal access)
+- `/tenants` — Tenant management (CRUD with domain management)
 
 ### Partner Portal
 
@@ -222,9 +222,7 @@ npm run dev
 
 Opens at http://localhost:3002. Routes:
 - `/` — Dashboard
-- `/products` — Product management
-- `/inventory` — Stock management
-- `/orders` — Order management
+- `/profile` — Partner profile management
 
 ### Customer Portal
 
@@ -235,8 +233,7 @@ npm run dev
 
 Opens at http://localhost:3003. Routes:
 - `/` — Dashboard
-- `/products` — Browse products
-- `/orders` — My orders
+- `/profile` — My profile
 
 ## Docker Setup
 
@@ -281,6 +278,8 @@ invt_management_system/
 │   │   ├── constants/          # API paths, pagination defaults
 │   │   ├── enums/              # Portals, roles, categories, statuses
 │   │   ├── errors/             # Error code constants
+│   │   ├── services/           # Shared API client and service modules
+│   │   ├── types/              # User, Tenant, and other shared interfaces
 │   │   └── validators/         # Email, SKU validation
 │   ├── server/                 # Express REST API
 │   │   └── src/
@@ -306,11 +305,13 @@ invt_management_system/
 
 ## Development Notes
 
-### Adding a new shared constant/enum
+### Adding a new shared type or service
 
-1. Edit the relevant file in `src/shared/`
+1. Edit the relevant file in `src/shared/` (types go in `types/`, services in `services/`)
 2. Update the barrel export in `src/shared/index.ts`
 3. Import from `@moc/shared` in any server or portal package
+
+Shared services use a lightweight fetch-based API client in `src/shared/services/api-client.ts` with `apiGet`, `apiPost`, `apiPut`, `apiDelete` helpers for consistent error handling.
 
 ### Adding a new API endpoint
 
@@ -318,6 +319,8 @@ invt_management_system/
 2. Register it in `src/server/src/routes/index.ts`
 3. Create a controller in `src/server/src/controllers/`
 4. Add middleware as needed in `src/server/src/middleware/`
+5. Add a shared TypeScript interface in `src/shared/types/`
+6. Add a shared service in `src/shared/services/` for frontend consumption
 
 ### Database changes
 

@@ -110,6 +110,7 @@ export function UserList() {
       {deleteError && <p style={{ color: "red" }}>{deleteError}</p>}
 
       {!loading && !error && (
+        <div style={{ overflowX: "auto", borderRadius: 8, border: "1px solid #e0e0e0" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ background: "#f5f5f5", textAlign: "left" }}>
@@ -146,6 +147,7 @@ export function UserList() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       <div style={{ marginTop: 16, display: "flex", justifyContent: "center", gap: 8 }}>
