@@ -1,5 +1,6 @@
 import { useState, useEffect, FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Role } from "@moc/shared";
 
 const USERS_PATH = "/api/users";
 
@@ -10,7 +11,14 @@ interface FormData {
   status: "active" | "inactive";
 }
 
-const initialForm: FormData = { name: "", email: "", role: "viewer", status: "active" };
+const initialForm: FormData = { name: "", email: "", role: Role.VIEWER, status: "active" };
+
+const ROLE_OPTIONS = [
+  { value: Role.SUPER_ADMIN, label: "Super Admin" },
+  { value: Role.ADMIN, label: "Admin" },
+  { value: Role.MANAGER, label: "Manager" },
+  { value: Role.VIEWER, label: "Viewer" },
+];
 
 export function UserForm() {
   const { id } = useParams<{ id: string }>();
@@ -92,10 +100,9 @@ export function UserForm() {
             onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
             style={inputStyle}
           >
-            <option value="super_admin">Super Admin</option>
-            <option value="admin">Admin</option>
-            <option value="manager">Manager</option>
-            <option value="viewer">Viewer</option>
+            {ROLE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
           </select>
         </div>
         <div style={{ marginBottom: 16 }}>

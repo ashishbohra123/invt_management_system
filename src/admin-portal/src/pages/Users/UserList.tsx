@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { UserFormModal } from "./UserFormModal";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
 
 interface User {
   id: string;
@@ -19,37 +20,57 @@ export function UserList() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const pageSize = 10;
+  const abortRef = useRef<AbortController | null>(null);
 
   const fetchUsers = useCallback(async () => {
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
       if (search) params.set("search", search);
-      const res = await fetch(`${USERS_PATH}?${params}`);
+      const res = await fetch(`${USERS_PATH}?${params}`, { signal: controller.signal });
       if (!res.ok) throw new Error("Failed to fetch users");
       const data = await res.json();
-      setUsers(Array.isArray(data) ? data : data.data ?? []);
+      const items = Array.isArray(data) ? data : data.data ?? [];
+      setUsers(items);
+      setTotalPages(data.totalPages ?? Math.ceil((data.total ?? items.length) / pageSize));
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
-  }, [page, search]);
+  }, [page, search, pageSize]);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+  useEffect(() => {
+    return () => {
+      if (abortRef.current) abortRef.current.abort();
+    };
+  }, []);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      const res = await fetch(`${USERS_PATH}/${id}`, { method: "DELETE" });
+      const res = await fetch(`${USERS_PATH}/${deleteTarget.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete user");
-      setUsers((prev) => prev.filter((u) => u.id !== id));
+      setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
+      setDeleteTarget(null);
+      setDeleteError(null);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Delete failed");
+      setDeleteError(err instanceof Error ? err.message : "Delete failed");
+      setDeleteTarget(null);
     }
   };
 
@@ -86,6 +107,7 @@ export function UserList() {
 
       {loading && <p>Loading...</p>}
       {error && <p style={{ color: "red" }}>{error}</p>}
+      {deleteError && <p style={{ color: "red" }}>{deleteError}</p>}
 
       {!loading && !error && (
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -116,7 +138,7 @@ export function UserList() {
                 <td style={tdStyle}>{new Date(user.createdAt).toLocaleDateString()}</td>
                 <td style={tdStyle}>
                   <button onClick={() => openEdit(user)} style={editBtnStyle}>Edit</button>
-                  <button onClick={() => handleDelete(user.id)} style={deleteBtnStyle}>
+                  <button onClick={() => setDeleteTarget(user)} style={deleteBtnStyle}>
                     Delete
                   </button>
                 </td>
@@ -128,8 +150,8 @@ export function UserList() {
 
       <div style={{ marginTop: 16, display: "flex", justifyContent: "center", gap: 8 }}>
         <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} style={btnStyle}>Previous</button>
-        <span style={{ padding: "8px 0" }}>Page {page}</span>
-        <button onClick={() => setPage((p) => p + 1)} style={btnStyle}>Next</button>
+        <span style={{ padding: "8px 0" }}>Page {page} of {totalPages}</span>
+        <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} style={btnStyle}>Next</button>
       </div>
 
       <UserFormModal
@@ -137,6 +159,17 @@ export function UserList() {
         onClose={closeModal}
         editUser={editingUser ? { ...editingUser, portalAccess: editingUser.portalAccess ?? [] } : null}
         onSave={fetchUsers}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete User"
+        message={`Are you sure you want to delete ${deleteTarget?.name ?? "this user"}? This action cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        confirmStyle="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
       />
     </div>
   );
