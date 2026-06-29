@@ -2,7 +2,9 @@
   "name": "invt-management-system",
   "version": "0.1.0",
   "private": true,
-  "workspaces": ["src/*"],
+  "workspaces": [
+    "src/*"
+  ],
   "scripts": {
     "dev": "concurrently -n server,admin,partner,customer -c blue,green,yellow,magenta \"npm run dev -w @moc/server\" \"npm run dev -w @moc/admin-portal\" \"npm run dev -w @moc/partner-portal\" \"npm run dev -w @moc/customer-portal\"",
     "build": "npm run build -ws --if-present",
@@ -12,7 +14,16 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.0",
-    "typescript": "^5.5.0"
+    "playwright": "^1.61.1",
+    "typescript": "^5.9.3"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "pg": "^8.22.0",
+    "tsx": "^4.22.4",
+    "vite": "^5.4.21"
+  }
 }
