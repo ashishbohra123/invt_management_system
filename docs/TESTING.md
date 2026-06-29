@@ -9,12 +9,13 @@ Client (curl/browser/portal)
         │ HTTP :3000
         ▼
   Express API Server
-  ┌──────────────────────┐
-  │  config/index.ts     │  ← reads env vars, creates PostgreSQL Pool
-  │  routes/*.ts         │  ← defines API endpoints
-  │  controllers/*.ts    │  ← handles requests
-  │  middleware/*.ts     │  ← auth, logging, error handling
-  └──────────┬───────────┘
+  ┌──────────────────────────┐
+  │  db/sync.ts              │  ← auto-creates DB + schema on startup
+  │  config/index.ts         │  ← reads env vars, creates PostgreSQL Pool
+  │  routes/*.ts             │  ← defines API endpoints
+  │  controllers/*.ts        │  ← handles requests
+  │  middleware/*.ts         │  ← auth, logging, error handling
+  └──────────────┬───────────┘
              │ SQL :5432
              ▼
        PostgreSQL
@@ -56,10 +57,7 @@ This starts PostgreSQL 16 on port 5432 with the database `invt_mgmt`. The schema
 
 **Option B — Local PostgreSQL installation:**
 
-```bash
-createdb invt_mgmt
-psql -d invt_mgmt -f src/db/init.sql
-```
+If using a local PostgreSQL install, just ensure PostgreSQL is accepting connections. The server auto-creates the database and tables on startup (see [Auto-sync on server startup](#auto-sync-on-server-startup)).
 
 ### 3. Configure environment
 
@@ -95,8 +93,15 @@ npm run dev
 
 The server runs via `tsx watch src/index.ts` — TypeScript is executed directly (no build step needed). The `--watch` flag auto-restarts on file changes.
 
+On first run, the server:
+1. Connects to PostgreSQL and creates the `invt_mgmt` database if it doesn't exist
+2. Reads `src/db/init.sql` and runs it to create all tables (idempotent — safe to re-run)
+3. Starts the Express API on port 3000
+
 Expected output:
 ```
+[db] Created database: invt_mgmt
+[db] Schema synchronized
 Server running on port 3000
 ```
 
@@ -148,6 +153,8 @@ export const pool = new Pool({
 ```
 
 The pool is imported by controllers and repositories to run SQL queries. It manages up to 20 concurrent connections and reuses them across requests.
+
+Before the server starts accepting requests, `db/sync.ts` runs `ensureDatabase()` which creates the database and tables automatically — no manual setup required beyond having PostgreSQL running.
 
 ### How queries flow
 
@@ -253,6 +260,22 @@ PostgreSQL Docker image runs all `.sql` files in `/docker-entrypoint-initdb.d/` 
 ```bash
 psql -d invt_mgmt -f src/db/init.sql
 ```
+
+**Path C — Auto-sync on server startup (default for local dev):**
+
+The server now auto-creates the database and schema on startup via `src/server/src/db/sync.ts`:
+
+```typescript
+// Called from src/server/src/index.ts before app.listen()
+ensureDatabase().then(() => app.listen(...))
+```
+
+`sync.ts` works in two steps:
+
+1. **Create database** — Connects to the `postgres` admin database and runs `CREATE DATABASE IF NOT EXISTS` (checked via `pg_database` catalog)
+2. **Sync schema** — Reads `src/db/init.sql` and executes it against the target database. All tables use `CREATE TABLE IF NOT EXISTS`, so repeated runs are safe.
+
+No manual `createdb` or `psql -f` steps needed for local development — just start PostgreSQL and run the server.
 
 ### Entity relationships
 
@@ -426,7 +449,7 @@ SELECT status, COUNT(*) FROM orders GROUP BY status;
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | `ECONNREFUSED :5432` | PostgreSQL not running | `docker compose up postgres -d` |
-| `relation "tenants" does not exist` | Schema not loaded | Run `psql -d invt_mgmt -f src/db/init.sql` |
+| `relation "tenants" does not exist` | Schema not loaded | Restart the server — `db/sync.ts` auto-runs `init.sql` on startup. Or run `psql -d invt_mgmt -f src/db/init.sql` manually |
 | `Missing token` / `Invalid token` | JWT issue | Re-login or check `JWT_SECRET` in `.env` |
 | Port 3000 in use | Another process | `lsof -i :3000`, kill, or change `PORT` in `.env` |
 | Tests hang on DB connect | No test DB | Ensure PostgreSQL is running |
