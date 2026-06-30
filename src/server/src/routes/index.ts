@@ -1,5 +1,4 @@
 import { Router } from "express";
-import swaggerUi from "swagger-ui-express";
 import { healthRouter } from "./health.js";
 import { authRouter } from "./auth.js";
 import { tenantRouter } from "./tenants.js";
@@ -17,5 +16,4 @@ router.use("/users", userRouter);
 router.use("/products", productRouter);
 router.use("/inventory", inventoryRouter);
 router.use("/orders", orderRouter);
-router.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec));
 router.get("/openapi.json", (_req, res) => { res.json(openApiSpec); });
