@@ -1,7 +1,13 @@
 import pg from "pg";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import { config } from "../config/env.js";
+
+const projectRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../../.."
+);
 
 export async function ensureDatabase(): Promise<void> {
   const adminPool = new pg.Pool({
@@ -27,7 +33,7 @@ export async function ensureDatabase(): Promise<void> {
     await adminPool.end();
   }
 
-  const sqlPath = path.resolve(process.cwd(), "src/db/init.sql");
+  const sqlPath = path.resolve(projectRoot, "src/db/init.sql");
   if (!fs.existsSync(sqlPath)) {
     console.warn(`[db] init.sql not found at ${sqlPath}, skipping schema sync`);
     return;
@@ -47,6 +53,9 @@ export async function ensureDatabase(): Promise<void> {
 
   try {
     await pool.query(sql);
+    await pool.query(
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS name VARCHAR(255) DEFAULT ''`
+    );
     console.log("[db] Schema synchronized");
   } finally {
     await pool.end();
