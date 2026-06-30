@@ -41,9 +41,20 @@ export function UserList() {
       const res = await fetch(`${USERS_PATH}?${params}`, { signal: controller.signal });
       if (!res.ok) throw new Error("Failed to fetch users");
       const data = await res.json();
-      const items = Array.isArray(data) ? data : data.data ?? [];
+      const inner = data.data;
+      const items = Array.isArray(inner)
+        ? inner
+        : Array.isArray(inner?.data)
+          ? inner.data
+          : [];
       setUsers(items);
-      setTotalPages(data.totalPages ?? Math.ceil((data.total ?? items.length) / pageSize));
+      setTotalPages(
+        inner?.totalPages ??
+          Math.max(
+            1,
+            Math.ceil((inner?.total ?? items.length) / pageSize)
+          )
+      );
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Unknown error");
