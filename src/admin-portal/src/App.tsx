@@ -22,8 +22,8 @@ function Layout({ children }: { children: React.ReactNode }) {
         </Link>
         <Link to="/users" style={{ color: "#fff", textDecoration: "none" }}>Users</Link>
         <Link to="/tenants" style={{ color: "#fff", textDecoration: "none" }}>Tenants</Link>
-        <Link to="/products" style={{ color: "#fff", textDecoration: "none" }}>Products</Link>
-        <Link to="/orders" style={{ color: "#fff", textDecoration: "none" }}>Orders</Link>
+        {/* <Link to="/products" style={{ color: "#fff", textDecoration: "none" }}>Products</Link>
+        <Link to="/orders" style={{ color: "#fff", textDecoration: "none" }}>Orders</Link> */}
       </nav>
       <main style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>{children}</main>
     </div>
