@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { authController } from "../controllers/authController.js";
+import { authenticate } from "../middleware/authenticate.js";
 
 export const authRouter = Router();
 
@@ -48,3 +49,4 @@ authRouter.post("/login", authController.login);
  *         description: Account created
  */
 authRouter.post("/register", authController.register);
+authRouter.get("/me", authenticate, authController.me);

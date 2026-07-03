@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { pool } from "../config/index.js";
 import { config } from "../config/env.js";
 
+
 export const authController = {
   login: async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -53,6 +54,21 @@ export const authController = {
         [name, email, hashed, role || "viewer", portalAccess || [], tenantId || null]
       );
       res.status(201).json(result.rows[0]);
+    } catch (err) { next(err); }
+  },
+
+  me: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await pool.query(
+        `SELECT id, name, email, role, portal_access, tenant_id, status, created_at, updated_at
+         FROM users WHERE id = $1 AND deleted_at IS NULL`,
+        [req.user!.id]
+      );
+      if (result.rows.length === 0) {
+        res.status(404).json({ success: false, error: "User not found" });
+        return;
+      }
+      res.json({ user: result.rows[0] });
     } catch (err) { next(err); }
   },
 };

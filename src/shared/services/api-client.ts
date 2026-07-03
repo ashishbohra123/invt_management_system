@@ -8,9 +8,10 @@ export class ApiError extends Error {
 }
 
 export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
+  const { headers: extraHeaders, ...rest } = options ?? {};
   const res = await fetch(url, {
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    ...options,
+    ...rest,
+    headers: { "Content-Type": "application/json", ...extraHeaders },
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
@@ -20,8 +21,8 @@ export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T
   return res.json();
 }
 
-export function apiGet<T>(url: string, signal?: AbortSignal) {
-  return apiFetch<T>(url, { signal });
+export function apiGet<T>(url: string, options?: RequestInit) {
+  return apiFetch<T>(url, { method: "GET", ...options });
 }
 
 export function apiPost<T>(url: string, data?: unknown) {

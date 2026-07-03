@@ -6,7 +6,7 @@
     "src/*"
   ],
   "scripts": {
-    "dev": "concurrently -n server,admin -c blue,green \"npm run dev -w @moc/server\" \"npm run dev -w @moc/admin-portal\"",
+    "dev": "concurrently -n server,admin,user -c blue,green,yellow \"npm run dev -w @moc/server\" \"npm run dev -w @moc/admin-portal\" \"npm run dev -w @moc/user-portal\"",
     "build": "npm run build -ws --if-present",
     "lint": "npm run lint -ws --if-present",
     "test": "npm run test -ws --if-present",

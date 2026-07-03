@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider, ProtectedRoute, LoginPage } from "@moc/shared";
 import { ToastProvider } from "./components/ui/Toast";
 import { ProductList } from "./pages/Products/index";
 import { InventoryList } from "./pages/Inventory/index";
@@ -32,15 +33,20 @@ function Layout({ children }: { children: React.ReactNode }) {
 
 export function App() {
   return (
-    <ToastProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Layout><h1>Dashboard</h1><p>Welcome to the user portal.</p></Layout>} />
-          <Route path="/products" element={<Layout><ProductList /></Layout>} />
-          <Route path="/inventory" element={<Layout><InventoryList /></Layout>} />
-          <Route path="/orders" element={<Layout><OrderList /></Layout>} />
-        </Routes>
-      </BrowserRouter>
-    </ToastProvider>
+    <AuthProvider>
+      <ToastProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<LoginPage portalTitle="User Portal" />} />
+            <Route element={<ProtectedRoute portalType="user" />}>
+              <Route path="/" element={<Layout><h1>Dashboard</h1><p>Welcome to the user portal.</p></Layout>} />
+              <Route path="/products" element={<Layout><ProductList /></Layout>} />
+              <Route path="/inventory" element={<Layout><InventoryList /></Layout>} />
+              <Route path="/orders" element={<Layout><OrderList /></Layout>} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </ToastProvider>
+    </AuthProvider>
   );
 }
