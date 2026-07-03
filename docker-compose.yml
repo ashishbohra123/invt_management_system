@@ -2,5 +2,4 @@ services:
   postgres: { image: postgres:16-alpine, ports: ["5432:5432"], environment: { POSTGRES_DB: invt_mgmt, POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres }, volumes: [pgdata:/var/lib/postgresql/data, ./src/db/init.sql:/docker-entrypoint-initdb.d/init.sql] }
   server: { build: ./src/server, ports: ["3000:3000"], environment: { PORT: "3000", DB_HOST: postgres, DB_PORT: "5432", DB_NAME: invt_mgmt, DB_USER: postgres, DB_PASSWORD: postgres, JWT_SECRET: dev-secret }, depends_on: { postgres: { condition: service_healthy } } }
   admin-portal: { build: ./src/admin-portal, ports: ["3001:80"], environment: { VITE_API_URL: http://localhost:3000/api }, depends_on: [server] }
-  user-portal: { build: ./src/user-portal, ports: ["3002:80"], environment: { VITE_API_URL: http://localhost:3000/api }, depends_on: [server] }
 volumes: { pgdata: }
