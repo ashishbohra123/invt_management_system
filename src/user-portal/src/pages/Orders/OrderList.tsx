@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { DataTable } from "../../components/ui/DataTable";
+import { Button } from "../../components/ui/Button";
+import { Badge } from "../../components/ui/Badge";
+import { Modal } from "../../components/ui/Modal";
+import { Input } from "../../components/ui/Input";
+import { useToast } from "../../components/ui/Toast";
+import type { Column } from "../../components/ui/DataTable";
 
 interface Order {
   id: string; productId: string; productName: string; productSku: string;
@@ -9,6 +15,9 @@ interface Order {
 }
 
 const API_PATH = "/api/orders";
+const statusColors: Record<string, string> = {
+  created: "info", approved: "success", cancelled: "danger",
+};
 
 export function OrderList() {
   const [items, setItems] = useState<Order[]>([]);
@@ -23,6 +32,7 @@ export function OrderList() {
   const [actionType, setActionType] = useState<"approve" | "cancel" | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const pageSize = 10;
+  const { toast } = useToast();
 
   const fetchItems = useCallback(async () => {
     if (abortRef.current) abortRef.current.abort();
@@ -54,8 +64,11 @@ export function OrderList() {
       if (!res.ok) throw new Error("Failed to create order");
       setCreateOpen(false);
       setNewOrder({ productId: "", quantity: 1 });
+      toast("Order created successfully", "success");
       fetchItems();
-    } catch (err) { setError(err instanceof Error ? err.message : "Create failed"); }
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Create failed", "error");
+    }
   };
 
   const handleAction = async () => {
@@ -65,22 +78,58 @@ export function OrderList() {
       if (!res.ok) throw new Error(`Failed to ${actionType} order`);
       setActionTarget(null);
       setActionType(null);
+      toast(`Order ${actionType}d successfully`, "success");
       fetchItems();
-    } catch (err) { setError(err instanceof Error ? err.message : `${actionType} failed`); }
+    } catch (err) {
+      toast(err instanceof Error ? err.message : `${actionType} failed`, "error");
+    }
   };
 
-  const statusColors: Record<string, string> = { created: "#1976d2", approved: "#2e7d32", cancelled: "#d32f2f" };
+  const columns: Column<Order>[] = [
+    { key: "productName", header: "Product" },
+    { key: "productSku", header: "SKU" },
+    { key: "quantity", header: "Qty" },
+    {
+      key: "status", header: "Status",
+      render: (o) => (
+        <Badge variant={(statusColors[o.status] ?? "default") as "success" | "info" | "danger"}>
+          {o.status}
+        </Badge>
+      ),
+    },
+    {
+      key: "createdAt", header: "Created",
+      render: (o) => new Date(o.createdAt).toLocaleDateString(),
+    },
+    {
+      key: "actions", header: "Actions",
+      render: (o) => (
+        <>
+          {o.status === "created" && (
+            <>
+              <Button variant="ghost" size="sm" onClick={() => { setActionTarget(o); setActionType("approve"); }}>Approve</Button>
+              <Button variant="ghost" size="sm" onClick={() => { setActionTarget(o); setActionType("cancel"); }} style={{ color: "#d32f2f" }}>Cancel</Button>
+            </>
+          )}
+        </>
+      ),
+    },
+  ];
 
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <h1 style={{ margin: 0 }}>Orders</h1>
-        <button onClick={() => setCreateOpen(true)} style={newBtnStyle}>+ New Order</button>
+        <Button onClick={() => setCreateOpen(true)}>+ New Order</Button>
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <label style={{ marginRight: 8 }}>Filter:</label>
-        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} style={{ padding: 8 }}>
+        <label style={{ marginRight: 8, fontSize: 14 }}>Filter:</label>
+        <select
+          value={statusFilter}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+          style={{ padding: 8, borderRadius: 4, border: "1px solid #ccc", fontSize: 14 }}
+        >
           <option value="">All</option>
           <option value="created">Created</option>
           <option value="approved">Approved</option>
@@ -88,91 +137,58 @@ export function OrderList() {
         </select>
       </div>
 
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      <DataTable<Order>
+        columns={columns}
+        data={items}
+        loading={loading}
+        error={error}
+        keyExtractor={(o) => o.id}
+      />
 
-      {!loading && !error && (
-        <div style={{ overflowX: "auto", borderRadius: 8, border: "1px solid #e0e0e0" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ background: "#f5f5f5", textAlign: "left" }}>
-                <th style={thStyle}>Product</th><th style={thStyle}>SKU</th>
-                <th style={thStyle}>Qty</th><th style={thStyle}>Status</th>
-                <th style={thStyle}>Created</th><th style={thStyle}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.length === 0 && <tr><td colSpan={6} style={{ padding: 24, textAlign: "center" }}>No orders found.</td></tr>}
-              {items.map((o) => (
-                <tr key={o.id} style={{ borderBottom: "1px solid #e0e0e0" }}>
-                  <td style={tdStyle}>{o.productName}</td>
-                  <td style={tdStyle}>{o.productSku}</td>
-                  <td style={tdStyle}>{o.quantity}</td>
-                  <td style={tdStyle}>
-                    <span style={{ color: statusColors[o.status] ?? "#666", fontWeight: 600 }}>{o.status}</span>
-                  </td>
-                  <td style={tdStyle}>{new Date(o.createdAt).toLocaleDateString()}</td>
-                  <td style={tdStyle}>
-                    {o.status === "created" && (
-                      <>
-                        <button onClick={() => { setActionTarget(o); setActionType("approve"); }} style={approveBtnStyle}>Approve</button>
-                        <button onClick={() => { setActionTarget(o); setActionType("cancel"); }} style={cancelBtnStyle}>Cancel</button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <div style={{ marginTop: 16, display: "flex", justifyContent: "center", gap: 8 }}>
-        <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={btnStyle}>Previous</button>
-        <span style={{ padding: "8px 0" }}>Page {page} of {totalPages}</span>
-        <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={btnStyle}>Next</button>
+      <div style={{ marginTop: 16, display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}>
+        <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Previous</Button>
+        <span style={{ fontSize: 14 }}>Page {page} of {totalPages}</span>
+        <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Next</Button>
       </div>
 
-      {createOpen && (
-        <>
-          <div style={overlayStyle} onClick={() => setCreateOpen(false)} />
-          <div style={modalStyle}>
-            <h3>New Order</h3>
-            <div style={{ marginBottom: 12 }}>
-              <label>Product ID: </label>
-              <input value={newOrder.productId} onChange={(e) => setNewOrder(p => ({ ...p, productId: e.target.value }))} style={{ padding: 8, width: "100%", boxSizing: "border-box" }} />
-            </div>
-            <div style={{ marginBottom: 12 }}>
-              <label>Quantity: </label>
-              <input type="number" min={1} value={newOrder.quantity} onChange={(e) => setNewOrder(p => ({ ...p, quantity: parseInt(e.target.value) || 1 }))} style={{ padding: 8, width: "100%", boxSizing: "border-box" }} />
-            </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-              <button onClick={() => setCreateOpen(false)} style={{ padding: "8px 16px", cursor: "pointer" }}>Cancel</button>
-              <button onClick={handleCreate} style={primaryBtnStyle}>Create</button>
-            </div>
-          </div>
-        </>
-      )}
+      <Modal
+        open={createOpen}
+        title="New Order"
+        onClose={() => setCreateOpen(false)}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreate}>Create</Button>
+          </>
+        }
+      >
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ display: "block", marginBottom: 4, fontSize: 14, fontWeight: 500 }}>Product ID</label>
+          <Input value={newOrder.productId} onChange={(e) => setNewOrder(p => ({ ...p, productId: e.target.value }))} placeholder="Enter product ID" />
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ display: "block", marginBottom: 4, fontSize: 14, fontWeight: 500 }}>Quantity</label>
+          <Input type="number" value={String(newOrder.quantity)} onChange={(e) => setNewOrder(p => ({ ...p, quantity: parseInt(e.target.value) || 1 }))} />
+        </div>
+      </Modal>
 
-      <ConfirmDialog
+      <Modal
         open={actionTarget !== null}
         title={actionType === "approve" ? "Approve Order" : "Cancel Order"}
-        message={`Are you sure you want to ${actionType} this order?`}
-        confirmLabel={actionType === "approve" ? "Approve" : "Cancel"}
-        confirmStyle={actionType === "approve" ? "primary" : "danger"}
-        onConfirm={handleAction}
-        onCancel={() => { setActionTarget(null); setActionType(null); }}
-      />
+        onClose={() => { setActionTarget(null); setActionType(null); }}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => { setActionTarget(null); setActionType(null); }}>Back</Button>
+            <Button variant={actionType === "cancel" ? "danger" : "primary"} onClick={handleAction}>
+              {actionType === "approve" ? "Approve" : "Cancel"}
+            </Button>
+          </>
+        }
+      >
+        <p style={{ margin: 0, fontSize: 14, color: "#555", lineHeight: 1.5 }}>
+          Are you sure you want to {actionType} this order?
+        </p>
+      </Modal>
     </div>
   );
 }
-
-const thStyle: React.CSSProperties = { padding: 12, fontWeight: 600, borderBottom: "2px solid #e0e0e0" };
-const tdStyle: React.CSSProperties = { padding: 12 };
-const btnStyle: React.CSSProperties = { padding: "8px 16px", cursor: "pointer" };
-const newBtnStyle: React.CSSProperties = { padding: "8px 16px", background: "#388e3c", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 14 };
-const approveBtnStyle: React.CSSProperties = { marginRight: 8, color: "#2e7d32", border: "none", background: "none", cursor: "pointer", fontSize: 14 };
-const cancelBtnStyle: React.CSSProperties = { color: "#d32f2f", border: "none", background: "none", cursor: "pointer", fontSize: 14 };
-const primaryBtnStyle: React.CSSProperties = { padding: "8px 16px", background: "#388e3c", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 14 };
-const overlayStyle: React.CSSProperties = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 1001 };
-const modalStyle: React.CSSProperties = { position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", background: "#fff", borderRadius: 8, padding: 24, minWidth: 360, maxWidth: "90vw", zIndex: 1002, boxShadow: "0 8px 32px rgba(0,0,0,0.2)" };

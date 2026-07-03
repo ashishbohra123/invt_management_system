@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { DataTable } from "../../components/ui/DataTable";
+import { Badge } from "../../components/ui/Badge";
+import { Button } from "../../components/ui/Button";
+import type { Column } from "../../components/ui/DataTable";
 
 interface InventoryItem {
   id: string; productId: string; productName: string; productSku: string;
@@ -43,50 +46,40 @@ export function InventoryList() {
 
   const isLowStock = (item: InventoryItem) => item.currentInventory <= item.reorderThreshold;
 
+  const columns: Column<InventoryItem>[] = [
+    { key: "productName", header: "Product" },
+    { key: "productSku", header: "SKU" },
+    { key: "currentInventory", header: "Stock" },
+    { key: "reorderThreshold", header: "Threshold" },
+    {
+      key: "status", header: "Status",
+      render: (item) => (
+        <Badge variant={isLowStock(item) ? "warning" : "success"}>
+          {isLowStock(item) ? "Low Stock" : "In Stock"}
+        </Badge>
+      ),
+    },
+    {
+      key: "updatedAt", header: "Updated",
+      render: (item) => new Date(item.updatedAt).toLocaleDateString(),
+    },
+  ];
+
   return (
     <div>
       <h1>Inventory <span style={{ fontSize: 14, fontWeight: 400, color: "#666" }}>Stock Tracking</span></h1>
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {!loading && !error && (
-        <div style={{ overflowX: "auto", borderRadius: 8, border: "1px solid #e0e0e0" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ background: "#f5f5f5", textAlign: "left" }}>
-                <th style={thStyle}>Product</th><th style={thStyle}>SKU</th>
-                <th style={thStyle}>Stock</th><th style={thStyle}>Threshold</th>
-                <th style={thStyle}>Status</th><th style={thStyle}>Updated</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.length === 0 && <tr><td colSpan={6} style={{ padding: 24, textAlign: "center" }}>No inventory records found.</td></tr>}
-              {items.map((item) => (
-                <tr key={item.id} style={{ borderBottom: "1px solid #e0e0e0", background: isLowStock(item) ? "#fff3e0" : "transparent" }}>
-                  <td style={tdStyle}>{item.productName}</td>
-                  <td style={tdStyle}>{item.productSku}</td>
-                  <td style={tdStyle}>{item.currentInventory}</td>
-                  <td style={tdStyle}>{item.reorderThreshold}</td>
-                  <td style={tdStyle}>
-                    <span style={{ color: isLowStock(item) ? "#e65100" : "#2e7d32", fontWeight: 600 }}>
-                      {isLowStock(item) ? "Low Stock" : "In Stock"}
-                    </span>
-                  </td>
-                  <td style={tdStyle}>{new Date(item.updatedAt).toLocaleDateString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      <div style={{ marginTop: 16, display: "flex", justifyContent: "center", gap: 8 }}>
-        <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={btnStyle}>Previous</button>
-        <span style={{ padding: "8px 0" }}>Page {page} of {totalPages}</span>
-        <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={btnStyle}>Next</button>
+      <DataTable<InventoryItem>
+        columns={columns}
+        data={items}
+        loading={loading}
+        error={error}
+        keyExtractor={(item) => item.id}
+      />
+      <div style={{ marginTop: 16, display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}>
+        <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Previous</Button>
+        <span style={{ fontSize: 14 }}>Page {page} of {totalPages}</span>
+        <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Next</Button>
       </div>
     </div>
   );
 }
-
-const thStyle: React.CSSProperties = { padding: 12, fontWeight: 600, borderBottom: "2px solid #e0e0e0" };
-const tdStyle: React.CSSProperties = { padding: 12 };
-const btnStyle: React.CSSProperties = { padding: "8px 16px", cursor: "pointer" };
