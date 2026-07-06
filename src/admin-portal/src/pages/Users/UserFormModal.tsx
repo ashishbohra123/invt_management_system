@@ -67,7 +67,7 @@ export function UserFormModal({ open, onClose, editUser, onSave }: UserFormModal
         name: editUser.name || "",
         email: editUser.email || "",
         password: "",
-        role: editUser.role || Role.VIEWER,
+        role: (editUser.role as Role) || Role.VIEWER,
         portalAccess: editUser.portalAccess?.length ? editUser.portalAccess : [PortalType.ADMIN],
         isActive: editUser.status === "active",
       });
@@ -194,7 +194,7 @@ export function UserFormModal({ open, onClose, editUser, onSave }: UserFormModal
               <label style={labelStyle}>Role</label>
               <select
                 value={form.role}
-                onChange={(e) => setField("role", e.target.value)}
+                onChange={(e) => setField("role", e.target.value as Role)}
                 style={inputStyle}
               >
                 {ROLE_OPTIONS.map((opt) => (
