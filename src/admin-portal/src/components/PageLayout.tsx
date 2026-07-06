@@ -29,6 +29,7 @@ export function PageLayout({ children, crumbs }: PageLayoutProps) {
           </div>
           <div style={userInfoStyle}>
             <span style={userNameStyle}>{user?.name || "Admin User"}</span>
+            <button onClick={logout} style={logoutBtnStyle}>Sign Out</button>
             <div style={avatarStyle}>{initials}</div>
           </div>
         </div>
@@ -59,4 +60,9 @@ const avatarStyle: React.CSSProperties = {
   width: 40, height: 40, borderRadius: "50%", background: "#2563EB",
   color: "#fff", display: "flex", alignItems: "center",
   justifyContent: "center", fontWeight: 600, fontSize: 14,
+};
+const logoutBtnStyle: React.CSSProperties = {
+  padding: "6px 14px", border: "1px solid #D1D5DB", borderRadius: 6,
+  background: "#fff", cursor: "pointer", fontSize: 13, color: "#374151",
+  fontWeight: 500, fontFamily: "inherit",
 };
