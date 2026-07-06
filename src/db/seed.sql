@@ -10,7 +10,13 @@ INSERT INTO users (tenant_id, name, email, password, roles, portals, is_active)
 SELECT id, 'Admin User', 'admin@example.com',
   '$2a$10$pxLFVjVjGZW6ARnKFutiHOnnjWAbPDRR1s4MnlOr0gRgD1HbHq9AS',
   '["admin"]'::jsonb,
-  '["admin_portal", "user_portal"]'::jsonb,
+  '["admin", "user"]'::jsonb,
   true
 FROM tenants WHERE tenant_id = 'default'
 AND NOT EXISTS (SELECT 1 FROM users WHERE email = 'admin@example.com');
+
+-- Fix portal access format for existing users (migration from old format)
+UPDATE users
+SET portals = '["admin", "user"]'::jsonb
+WHERE email = 'admin@example.com'
+  AND portals::text LIKE '%admin_portal%';
