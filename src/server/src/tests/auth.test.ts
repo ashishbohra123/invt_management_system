@@ -104,5 +104,18 @@ describe("Auth API", () => {
       expect(res.status).toBe(200);
       expect(res.body.data.user.email).toBe("test@example.com");
     });
+
+    it("returns 401 without authorization header", async () => {
+      const res = await request(createApp()).get("/api/auth/me");
+      expect(res.status).toBe(401);
+    });
+
+    it("returns 404 for deleted or inactive user", async () => {
+      mockQuery.mockResolvedValue({ rows: [] });
+      const res = await request(createApp())
+        .get("/api/auth/me")
+        .set("Authorization", "Bearer test-token");
+      expect(res.status).toBe(404);
+    });
   });
 });
