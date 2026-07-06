@@ -20,7 +20,7 @@ export const authService = {
     apiPost<LoginResponse>("/api/auth/login", { email, password }),
 
   register: (input: RegisterInput) =>
-    apiPost<User>("/api/auth/register", input),
+    apiPost<LoginResponse>("/api/auth/register", input),
 
   getMe: (token: string) =>
     apiGet<{ user: User }>("/api/auth/me", {

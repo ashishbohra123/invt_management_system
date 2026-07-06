@@ -18,7 +18,11 @@ export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T
     throw new ApiError(body.error ?? res.statusText, res.status);
   }
   if (res.status === 204) return undefined as T;
-  return res.json();
+  const body = await res.json();
+  if (body && typeof body === "object" && "success" in body && body.success === true && "data" in body) {
+    return body.data as T;
+  }
+  return body as T;
 }
 
 export function apiGet<T>(url: string, options?: RequestInit) {

@@ -12,6 +12,7 @@ type AuthState = {
 
 type AuthContextValue = AuthState & {
   login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 };
 
@@ -73,13 +74,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setState({ user, token: res.token, isLoading: false, isAuthenticated: true });
   }, []);
 
+  const register = useCallback(async (name: string, email: string, password: string) => {
+    const res = await authService.register({ name, email, password });
+    const user = res.user as unknown as User;
+    persistAuth(res.token, user);
+    setState({ user, token: res.token, isLoading: false, isAuthenticated: true });
+  }, []);
+
   const logout = useCallback(() => {
     clearPersistedAuth();
     setState({ user: null, token: null, isLoading: false, isAuthenticated: false });
   }, []);
 
   return (
-    <AuthContext.Provider value={{ ...state, login, logout }}>
+    <AuthContext.Provider value={{ ...state, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
