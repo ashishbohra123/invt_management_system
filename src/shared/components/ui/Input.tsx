@@ -1,13 +1,15 @@
 import React, { type InputHTMLAttributes } from "react";
 
 const baseStyle: React.CSSProperties = {
-  padding: 8,
-  borderRadius: 4,
-  border: "1px solid #ccc",
+  padding: "10px 14px",
+  borderRadius: 6,
+  border: "1px solid #d1d5db",
   fontSize: 14,
   outline: "none",
   boxSizing: "border-box",
   width: "100%",
+  color: "#111",
+  transition: "border-color 0.15s",
 };
 
 export function Input({ style, onFocus, onBlur, ...props }: InputHTMLAttributes<HTMLInputElement>) {
@@ -15,11 +17,11 @@ export function Input({ style, onFocus, onBlur, ...props }: InputHTMLAttributes<
     <input
       style={{ ...baseStyle, ...style }}
       onFocus={(e) => {
-        e.target.style.borderColor = "#388e3c";
+        e.target.style.borderColor = "#2563eb";
         onFocus?.(e);
       }}
       onBlur={(e) => {
-        e.target.style.borderColor = "#ccc";
+        e.target.style.borderColor = "#d1d5db";
         onBlur?.(e);
       }}
       {...props}

@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { tenantsService, type Tenant } from "@moc/shared";
+import { DataTable, Button, SearchBar, Badge, Modal } from "@moc/shared";
+import type { Column } from "@moc/shared";
 import { TenantFormModal } from "./TenantFormModal";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 
@@ -55,67 +57,58 @@ export function TenantList() {
     !search || t.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  const columns: Column<Tenant>[] = [
+    { key: "name", header: "Name", render: (t) => <span style={{ fontWeight: 500 }}>{t.name}</span> },
+    {
+      key: "domains", header: "Domains",
+      render: (t) => (t.domains ?? []).join(", ") || "\u2014",
+    },
+    {
+      key: "status", header: "Status",
+      render: (t) => (
+        <Badge variant={t.status === "active" ? "success" : "danger"}>{t.status}</Badge>
+      ),
+    },
+    {
+      key: "createdAt", header: "Created",
+      render: (t) => new Date(t.createdAt).toLocaleDateString(),
+    },
+    {
+      key: "actions", header: "Actions",
+      render: (t) => (
+        <div style={{ display: "flex", gap: 8 }}>
+          <Button variant="ghost" size="sm" onClick={() => openEdit(t)}>Edit</Button>
+          <Button variant="ghost" size="sm" style={{ color: "#dc2626" }} onClick={() => setDeleteTarget(t)}>Delete</Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div>
-      <div style={headerRow}>
-        <h1 style={pageTitle}>Tenants</h1>
-        <button onClick={openCreate} style={primaryBtn}>+ New Tenant</button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#111" }}>Tenants</h1>
+        <Button onClick={openCreate}>+ New Tenant</Button>
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <input
-          type="text"
-          placeholder="Search tenants..."
+        <SearchBar
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={searchInput}
+          onChange={setSearch}
+          placeholder="Search tenants..."
         />
       </div>
 
-      {loading && <p style={loadingText}>Loading...</p>}
-      {error && <p style={errorText}>{error}</p>}
-      {deleteError && <p style={errorText}>{deleteError}</p>}
+      <DataTable
+        columns={columns}
+        data={filteredTenants}
+        loading={loading}
+        error={error}
+        emptyMessage="No tenants found."
+        keyExtractor={(t) => t.id}
+      />
 
-      {!loading && !error && (
-        <div style={tableWrap}>
-          <table style={table}>
-            <thead>
-              <tr>
-                <th style={th}>Name</th>
-                <th style={th}>Domains</th>
-                <th style={th}>Status</th>
-                <th style={th}>Created</th>
-                <th style={th}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTenants.length === 0 && (
-                <tr><td colSpan={5} style={emptyState}>No tenants found.</td></tr>
-              )}
-              {filteredTenants.map((tenant) => (
-                <tr key={tenant.id} style={rowStyle}>
-                  <td style={td}>{tenant.name}</td>
-                  <td style={td}>{(tenant.domains ?? []).join(", ") || "—"}</td>
-                  <td style={td}>
-                    <span style={{
-                      ...statusBadge,
-                      background: tenant.status === "active" ? "#dcfce7" : "#fef2f2",
-                      color: tenant.status === "active" ? "#166534" : "#991b1b",
-                    }}>
-                      {tenant.status}
-                    </span>
-                  </td>
-                  <td style={td}>{new Date(tenant.createdAt).toLocaleDateString()}</td>
-                  <td style={td}>
-                    <button onClick={() => openEdit(tenant)} style={actionBtn}>Edit</button>
-                    <button onClick={() => setDeleteTarget(tenant)} style={actionDangerBtn}>Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {deleteError && <p style={{ color: "#dc2626", fontSize: 14, marginTop: 8 }}>{deleteError}</p>}
 
       <TenantFormModal
         open={modalOpen}
@@ -137,62 +130,3 @@ export function TenantList() {
     </div>
   );
 }
-
-const pageTitle: React.CSSProperties = {
-  margin: 0, fontSize: 24, fontWeight: 700, color: "#111",
-};
-const headerRow: React.CSSProperties = {
-  display: "flex", justifyContent: "space-between", alignItems: "center",
-  marginBottom: 20,
-};
-const primaryBtn: React.CSSProperties = {
-  padding: "10px 20px", background: "#2563eb", color: "#fff",
-  border: "none", borderRadius: 8, cursor: "pointer", fontSize: 14,
-  fontWeight: 600,
-};
-const searchInput: React.CSSProperties = {
-  padding: "10px 14px", width: 320, fontSize: 14,
-  border: "1px solid #d1d5db", borderRadius: 8, outline: "none",
-  boxSizing: "border-box",
-};
-const loadingText: React.CSSProperties = {
-  color: "#6b7280", fontSize: 14,
-};
-const errorText: React.CSSProperties = {
-  color: "#dc2626", fontSize: 14,
-};
-const tableWrap: React.CSSProperties = {
-  overflowX: "auto", borderRadius: 8, border: "1px solid #e5e7eb",
-  background: "#fff",
-};
-const table: React.CSSProperties = {
-  width: "100%", borderCollapse: "collapse", fontSize: 14,
-};
-const th: React.CSSProperties = {
-  padding: "12px 16px", fontWeight: 600, color: "#374151",
-  borderBottom: "1px solid #e5e7eb", background: "#f9fafb",
-  whiteSpace: "nowrap", textAlign: "left", fontSize: 13,
-  textTransform: "uppercase", letterSpacing: "0.05em",
-};
-const td: React.CSSProperties = {
-  padding: "12px 16px", borderBottom: "1px solid #e5e7eb",
-  color: "#374151",
-};
-const rowStyle: React.CSSProperties = {
-  borderBottom: "1px solid #e5e7eb",
-};
-const emptyState: React.CSSProperties = {
-  padding: 32, textAlign: "center", color: "#9ca3af", fontSize: 14,
-};
-const statusBadge: React.CSSProperties = {
-  display: "inline-block", padding: "2px 10px", borderRadius: 9999,
-  fontSize: 12, fontWeight: 600,
-};
-const actionBtn: React.CSSProperties = {
-  marginRight: 8, color: "#2563eb", border: "none",
-  background: "none", cursor: "pointer", fontSize: 14, fontWeight: 500,
-};
-const actionDangerBtn: React.CSSProperties = {
-  color: "#dc2626", border: "none", background: "none",
-  cursor: "pointer", fontSize: 14, fontWeight: 500,
-};

@@ -1,6 +1,6 @@
 import { useState, useEffect, FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { API_PATHS, Role } from "@moc/shared";
+import { API_PATHS, Role, Input, Button } from "@moc/shared";
 
 const USERS_PATH = API_PATHS.USERS;
 
@@ -19,6 +19,13 @@ const ROLE_OPTIONS = [
   { value: Role.MANAGER, label: "Manager" },
   { value: Role.VIEWER, label: "Viewer" },
 ];
+
+const labelStyle: React.CSSProperties = { display: "block", marginBottom: 4, fontWeight: 500, fontSize: 14, color: "#374151" };
+const selectStyle: React.CSSProperties = {
+  width: "100%", padding: "10px 14px", border: "1px solid #d1d5db",
+  borderRadius: 6, fontSize: 14, outline: "none", boxSizing: "border-box",
+  color: "#111", background: "#fff",
+};
 
 export function UserForm() {
   const { id } = useParams<{ id: string }>();
@@ -67,31 +74,31 @@ export function UserForm() {
     }
   };
 
-  if (fetching) return <p>Loading user...</p>;
-  if (error && !form.name && isEdit) return <p style={{ color: "red" }}>{error}</p>;
+  if (fetching) return <p style={{ color: "#6b7280", fontSize: 14 }}>Loading user...</p>;
+  if (error && !form.name && isEdit) return <p style={{ color: "#dc2626" }}>{error}</p>;
 
   return (
     <div style={{ maxWidth: 480, margin: "0 auto" }}>
-      <h1>{isEdit ? "Edit User" : "Create User"}</h1>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      <h1 style={{ fontSize: 24, fontWeight: 700, color: "#111", margin: "0 0 24px" }}>
+        {isEdit ? "Edit User" : "Create User"}
+      </h1>
+      {error && <p style={{ color: "#dc2626", fontSize: 14, marginBottom: 16 }}>{error}</p>}
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 16 }}>
           <label style={labelStyle}>Name</label>
-          <input
+          <Input
             required
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            style={inputStyle}
           />
         </div>
         <div style={{ marginBottom: 16 }}>
           <label style={labelStyle}>Email</label>
-          <input
+          <Input
             type="email"
             required
             value={form.email}
             onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-            style={inputStyle}
           />
         </div>
         <div style={{ marginBottom: 16 }}>
@@ -99,7 +106,7 @@ export function UserForm() {
           <select
             value={form.role}
             onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
-            style={inputStyle}
+            style={selectStyle}
           >
             {ROLE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -111,25 +118,21 @@ export function UserForm() {
           <select
             value={form.status}
             onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as "active" | "inactive" }))}
-            style={inputStyle}
+            style={selectStyle}
           >
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button type="submit" disabled={loading} style={{ ...btnStyle, background: "#1976d2", color: "#fff" }}>
+          <Button type="submit" disabled={loading}>
             {loading ? "Saving..." : isEdit ? "Update" : "Create"}
-          </button>
-          <button type="button" onClick={() => navigate("/users")} style={{ ...btnStyle, background: "#e0e0e0" }}>
+          </Button>
+          <Button variant="secondary" type="button" onClick={() => navigate("/users")}>
             Cancel
-          </button>
+          </Button>
         </div>
       </form>
     </div>
   );
 }
-
-const labelStyle: React.CSSProperties = { display: "block", marginBottom: 4, fontWeight: 500 };
-const inputStyle: React.CSSProperties = { width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 4, boxSizing: "border-box" };
-const btnStyle: React.CSSProperties = { padding: "8px 16px", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 14 };

@@ -10,10 +10,10 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
-  primary: { background: "#388e3c", color: "#fff", border: "none" },
-  secondary: { background: "#fff", color: "#333", border: "1px solid #ccc" },
-  danger: { background: "#d32f2f", color: "#fff", border: "none" },
-  ghost: { background: "none", color: "#388e3c", border: "none", padding: "4px 8px" },
+  primary: { background: "#2563eb", color: "#fff", border: "none" },
+  secondary: { background: "#fff", color: "#374151", border: "1px solid #d1d5db" },
+  danger: { background: "#dc2626", color: "#fff", border: "none" },
+  ghost: { background: "none", color: "#2563eb", border: "none", padding: "4px 8px" },
 };
 
 const sizeStyles: Record<ButtonSize, React.CSSProperties> = {
@@ -30,7 +30,7 @@ export function Button({
     <button
       disabled={disabled}
       style={{
-        borderRadius: 4,
+        borderRadius: 6,
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.6 : 1,
         fontWeight: variant === "ghost" ? 500 : 600,
