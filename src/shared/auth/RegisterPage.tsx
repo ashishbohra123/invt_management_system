@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "./AuthContext.js";
-import { Input, Button, Card, CardContent, Label } from "../components/ui/index.js";
 
 interface RegisterPageProps {
   portalTitle?: string;
@@ -41,46 +40,128 @@ export function RegisterPage({ portalTitle = "Portal", loginPath = "/login" }: R
   };
 
   return (
-    <div style={{
-      display: "flex", justifyContent: "center", alignItems: "center",
-      minHeight: "100vh", background: "#f0f2f5",
-    }}>
-      <Card style={{ width: 360, maxWidth: "90vw", padding: 0 }}>
-        <CardContent>
-          <h1 style={{ fontSize: 24, marginBottom: 8 }}>{portalTitle}</h1>
-          <p style={{ fontSize: 14, color: "#666", marginBottom: 24 }}>Create a new account</p>
+    <div style={{ display: "flex", minHeight: "100vh" }}>
+      <div style={{
+        flex: "0 0 976px", background: "#1e293b", color: "#fff",
+        display: "flex", flexDirection: "column", justifyContent: "center",
+        padding: "0 80px", boxSizing: "border-box",
+      }}>
+        <h1 style={{ fontSize: 40, fontWeight: 700, margin: "0 0 8px 0" }}>IMS Portal</h1>
+        <p style={{ fontSize: 15, color: "#94a3b8", lineHeight: 1.6, margin: "0 0 40px 0", maxWidth: 420 }}>
+          Enterprise inventory management system. Real-time tracking, automated workflows, and powerful analytics — all in one place.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {["Real-time inventory tracking", "Automated order fulfillment", "Advanced analytics dashboard"].map((item) => (
+            <div key={item} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 6, height: 6, borderRadius: 3, background: "#60a5fa", flexShrink: 0 }} />
+              <span style={{ fontSize: 14, color: "#94a3b8" }}>{item}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{
+        flex: 1, background: "#fff", display: "flex",
+        alignItems: "center", justifyContent: "center",
+      }}>
+        <div style={{ width: 380 }}>
+          <p style={{ fontSize: 24, fontWeight: 700, color: "#2563eb", margin: "0 0 32px 0" }}>
+            IMS Portal
+          </p>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111", margin: "0 0 4px 0" }}>
+            Create account
+          </h2>
+          <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 24px 0" }}>
+            Sign up to get started
+          </p>
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: 16 }}>
-              <Label htmlFor="reg-name">Name</Label>
-              <Input id="reg-name" type="text" value={name} onChange={(e) => setName(e.target.value)} required autoFocus />
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: "block", fontSize: 15, color: "#374151", marginBottom: 6, fontWeight: 500 }}>
+                Name
+              </label>
+              <input
+                type="text" value={name} required autoFocus
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+                style={{
+                  width: "100%", padding: "10px 14px", fontSize: 14,
+                  border: "1px solid #d1d5db", borderRadius: 8, outline: "none",
+                  boxSizing: "border-box",
+                }}
+                onFocus={(e) => e.target.style.borderColor = "#2563eb"}
+                onBlur={(e) => e.target.style.borderColor = "#d1d5db"}
+              />
             </div>
-            <div style={{ marginBottom: 16 }}>
-              <Label htmlFor="reg-email">Email</Label>
-              <Input id="reg-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: "block", fontSize: 15, color: "#374151", marginBottom: 6, fontWeight: 500 }}>
+                Email
+              </label>
+              <input
+                type="email" value={email} required
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@company.com"
+                style={{
+                  width: "100%", padding: "10px 14px", fontSize: 14,
+                  border: "1px solid #d1d5db", borderRadius: 8, outline: "none",
+                  boxSizing: "border-box",
+                }}
+                onFocus={(e) => e.target.style.borderColor = "#2563eb"}
+                onBlur={(e) => e.target.style.borderColor = "#d1d5db"}
+              />
             </div>
-            <div style={{ marginBottom: 16 }}>
-              <Label htmlFor="reg-password">Password</Label>
-              <Input id="reg-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: "block", fontSize: 15, color: "#374151", marginBottom: 6, fontWeight: 500 }}>
+                Password
+              </label>
+              <input
+                type="password" value={password} required minLength={6}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                style={{
+                  width: "100%", padding: "10px 14px", fontSize: 14,
+                  border: "1px solid #d1d5db", borderRadius: 8, outline: "none",
+                  boxSizing: "border-box",
+                }}
+                onFocus={(e) => e.target.style.borderColor = "#2563eb"}
+                onBlur={(e) => e.target.style.borderColor = "#d1d5db"}
+              />
             </div>
-            <div style={{ marginBottom: 16 }}>
-              <Label htmlFor="reg-confirm">Confirm Password</Label>
-              <Input id="reg-confirm" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: "block", fontSize: 15, color: "#374151", marginBottom: 6, fontWeight: 500 }}>
+                Confirm Password
+              </label>
+              <input
+                type="password" value={confirmPassword} required
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                style={{
+                  width: "100%", padding: "10px 14px", fontSize: 14,
+                  border: "1px solid #d1d5db", borderRadius: 8, outline: "none",
+                  boxSizing: "border-box",
+                }}
+                onFocus={(e) => e.target.style.borderColor = "#2563eb"}
+                onBlur={(e) => e.target.style.borderColor = "#d1d5db"}
+              />
             </div>
             {error && (
               <p style={{ color: "#d32f2f", fontSize: 13, marginBottom: 12 }} role="alert">
                 {error}
               </p>
             )}
-            <Button type="submit" disabled={submitting} style={{ width: "100%" }}>
+            <button type="submit" disabled={submitting} style={{
+              width: "100%", padding: 12, fontSize: 15, fontWeight: 700,
+              background: submitting ? "#93c5fd" : "#2563eb", color: "#fff",
+              border: "none", borderRadius: 8, cursor: submitting ? "not-allowed" : "pointer",
+            }}>
               {submitting ? "Creating account..." : "Create Account"}
-            </Button>
+            </button>
           </form>
-          <p style={{ fontSize: 13, textAlign: "center", marginTop: 16 }}>
+          <p style={{ fontSize: 13, textAlign: "center", color: "#6b7280", marginTop: 24 }}>
             Already have an account?{" "}
-            <a href={loginPath} style={{ color: "#1976d2" }}>Sign in</a>
+            <Link to={loginPath} style={{ color: "#2563eb", textDecoration: "none" }}>Sign in</Link>
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
