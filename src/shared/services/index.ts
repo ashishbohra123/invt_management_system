@@ -5,4 +5,3 @@ export { tenantsService } from "./tenants.js";
 export { productsService } from "./products.js";
 export { inventoryService } from "./inventory.js";
 export { ordersService } from "./orders.js";
-export { authService } from "./auth.js";
