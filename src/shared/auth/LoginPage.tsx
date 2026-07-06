@@ -1,28 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext.js";
+import { Input, Button, Card, CardContent, Label } from "../components/ui/index.js";
 
-const containerStyle: React.CSSProperties = {
-  display: "flex", justifyContent: "center", alignItems: "center",
-  minHeight: "100vh", background: "#f0f2f5",
-};
+interface LoginPageProps {
+  portalTitle?: string;
+}
 
-const cardStyle: React.CSSProperties = {
-  background: "#fff", padding: 40, borderRadius: 8, boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-  width: 360, maxWidth: "90vw",
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%", padding: "10px 12px", border: "1px solid #d9d9d9",
-  borderRadius: 4, fontSize: 14, boxSizing: "border-box",
-};
-
-const btnStyle: React.CSSProperties = {
-  width: "100%", padding: "10px 12px", background: "#1976d2", color: "#fff",
-  border: "none", borderRadius: 4, fontSize: 14, cursor: "pointer", fontWeight: 600,
-};
-
-export function LoginPage({ portalTitle = "Portal" }: { portalTitle?: string }) {
+export function LoginPage({ portalTitle = "Portal" }: LoginPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isAuthenticated } = useAuth();
@@ -51,38 +36,49 @@ export function LoginPage({ portalTitle = "Portal" }: { portalTitle?: string }) 
   };
 
   return (
-    <div style={containerStyle}>
-      <div style={cardStyle}>
-        <h1 style={{ fontSize: 24, marginBottom: 8 }}>{portalTitle}</h1>
-        <p style={{ fontSize: 14, color: "#666", marginBottom: 24 }}>Sign in to continue</p>
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", fontSize: 13, marginBottom: 4, color: "#333" }}>Email</label>
-            <input
-              style={inputStyle}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoFocus
-            />
-          </div>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", fontSize: 13, marginBottom: 4, color: "#333" }}>Password</label>
-            <input
-              style={inputStyle}
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          {error && <p style={{ color: "#d32f2f", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-          <button type="submit" disabled={submitting} style={{ ...btnStyle, opacity: submitting ? 0.7 : 1 }}>
-            {submitting ? "Signing in..." : "Sign In"}
-          </button>
-        </form>
-      </div>
+    <div
+      style={{
+        display: "flex", justifyContent: "center", alignItems: "center",
+        minHeight: "100vh", background: "#f0f2f5",
+      }}
+    >
+      <Card style={{ width: 360, maxWidth: "90vw", padding: 0 }}>
+        <CardContent>
+          <h1 style={{ fontSize: 24, marginBottom: 8 }}>{portalTitle}</h1>
+          <p style={{ fontSize: 14, color: "#666", marginBottom: 24 }}>Sign in to continue</p>
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: 16 }}>
+              <Label htmlFor="login-email">Email</Label>
+              <Input
+                id="login-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoFocus
+              />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <Label htmlFor="login-password">Password</Label>
+              <Input
+                id="login-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            {error && (
+              <p style={{ color: "#d32f2f", fontSize: 13, marginBottom: 12 }} role="alert">
+                {error}
+              </p>
+            )}
+            <Button type="submit" disabled={submitting} style={{ width: "100%" }}>
+              {submitting ? "Signing in..." : "Sign In"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
