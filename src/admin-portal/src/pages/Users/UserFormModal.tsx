@@ -29,6 +29,7 @@ const ROLE_OPTIONS = [
 
 const PORTAL_OPTIONS = [
   { value: PortalType.ADMIN, label: "Admin Portal" },
+  { value: PortalType.USER, label: "User Portal" },
 ];
 
 const initialForm = {
