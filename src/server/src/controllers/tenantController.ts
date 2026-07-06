@@ -169,6 +169,20 @@ export const tenantController = {
     }
   },
 
+  getById: async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await pool.query<TenantRow>(
+      `SELECT id, tenant_id, name, domains, status, created_at, updated_at
+       FROM tenants WHERE id = $1`,
+      [id]
+    );
+    if (result.rowCount === 0) {
+      res.status(404).json({ success: false, error: "Tenant not found" });
+      return;
+    }
+    res.json(toTenant(result.rows[0]));
+  },
+
   delete: async (req: Request, res: Response) => {
     const { id } = req.params;
     const result = await pool.query(`DELETE FROM tenants WHERE id = $1`, [id]);
