@@ -39,7 +39,7 @@ export const authController = {
       const token = jwt.sign(
         { id: user.id, tenantId: user.tenant_id, roles: Array.isArray(user.roles) ? user.roles : [] },
         config.JWT_SECRET,
-        { expiresIn: config.JWT_EXPIRY }
+        { expiresIn: config.JWT_EXPIRY } as jwt.SignOptions
       );
       res.json({ token, user: toUser(user) });
     } catch (err) { next(err); }
@@ -68,7 +68,7 @@ export const authController = {
       const token = jwt.sign(
         { id: newUser.id, tenantId: newUser.tenant_id, roles: Array.isArray(newUser.roles) ? newUser.roles : [] },
         config.JWT_SECRET,
-        { expiresIn: config.JWT_EXPIRY }
+        { expiresIn: config.JWT_EXPIRY } as jwt.SignOptions
       );
       res.status(201).json({ token, user: toUser(newUser) });
     } catch (err) { next(err); }
