@@ -11,7 +11,7 @@ interface CardProps {
 const cardStyle: React.CSSProperties = {
   background: "#fff",
   borderRadius: 8,
-  border: "1px solid #e5e7eb",
+  border: "1px solid #E5E7EB",
   overflow: "hidden",
 };
 

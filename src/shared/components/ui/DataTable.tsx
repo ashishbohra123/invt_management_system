@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Badge } from "./Badge.js";
 
 export interface Column<T> {
   key: string;
@@ -15,35 +14,36 @@ interface DataTableProps<T> {
   error?: string | null;
   emptyMessage?: string;
   keyExtractor: (item: T) => string;
+  footer?: ReactNode;
 }
 
+const tableWrap: React.CSSProperties = {
+  background: "#fff", border: "1px solid #E5E7EB",
+  borderRadius: 8, overflow: "hidden",
+};
 const thStyle: React.CSSProperties = {
-  padding: "12px 16px", fontWeight: 600,
-  borderBottom: "1px solid #e5e7eb",
-  textAlign: "left", fontSize: 13,
-  color: "#374151", background: "#f9fafb",
+  padding: "14px 16px", fontWeight: 600,
+  borderBottom: "1px solid #F3F4F6",
+  textAlign: "left", fontSize: 11,
+  color: "#374151", background: "#F9FAFB",
   textTransform: "uppercase", letterSpacing: "0.05em",
   whiteSpace: "nowrap",
 };
 const tdStyle: React.CSSProperties = {
-  padding: "12px 16px", fontSize: 14,
-  borderBottom: "1px solid #e5e7eb",
+  padding: "14px 16px", fontSize: 14,
+  borderBottom: "1px solid #F3F4F6",
   color: "#374151",
-};
-const wrapperStyle: React.CSSProperties = {
-  overflowX: "auto", borderRadius: 8,
-  border: "1px solid #e5e7eb", background: "#fff",
 };
 
 export function DataTable<T>({
   columns, data, loading, error,
-  emptyMessage = "No data found.", keyExtractor,
+  emptyMessage = "No data found.", keyExtractor, footer,
 }: DataTableProps<T>) {
-  if (loading) return <p style={{ color: "#6b7280", fontSize: 14 }}>Loading...</p>;
-  if (error) return <p style={{ color: "#dc2626", fontSize: 14 }}>{error}</p>;
+  if (loading) return <p style={{ color: "#6B7280", fontSize: 14 }}>Loading...</p>;
+  if (error) return <p style={{ color: "#DC2626", fontSize: 14 }}>{error}</p>;
 
   return (
-    <div style={wrapperStyle}>
+    <div style={tableWrap}>
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr>
@@ -55,13 +55,16 @@ export function DataTable<T>({
         <tbody>
           {data.length === 0 && (
             <tr>
-              <td colSpan={columns.length} style={{ padding: 32, textAlign: "center", color: "#9ca3af", fontSize: 14 }}>
+              <td colSpan={columns.length} style={{ padding: 32, textAlign: "center", color: "#9CA3AF", fontSize: 14 }}>
                 {emptyMessage}
               </td>
             </tr>
           )}
           {data.map((item) => (
-            <tr key={keyExtractor(item)}>
+            <tr key={keyExtractor(item)} style={{ transition: "background 0.2s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#F9FAFB"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            >
               {columns.map((col) => (
                 <td key={col.key} style={{ ...tdStyle, ...col.style }}>
                   {col.render ? col.render(item) : (item as Record<string, unknown>)[col.key] as ReactNode}
@@ -71,6 +74,7 @@ export function DataTable<T>({
           ))}
         </tbody>
       </table>
+      {footer && <div>{footer}</div>}
     </div>
   );
 }

@@ -5,6 +5,9 @@ import type { Column } from "@moc/shared";
 import { TenantFormModal } from "./TenantFormModal";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 
+const iconEdit = "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7 M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z";
+const iconDelete = "M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2";
+
 export function TenantList() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,14 +57,25 @@ export function TenantList() {
   }
 
   const filteredTenants = tenants.filter((t) =>
-    !search || t.name.toLowerCase().includes(search.toLowerCase())
+    !search ||
+    t.name.toLowerCase().includes(search.toLowerCase()) ||
+    (t.domains ?? []).some((d) => d.toLowerCase().includes(search.toLowerCase()))
   );
 
   const columns: Column<Tenant>[] = [
-    { key: "name", header: "Name", render: (t) => <span style={{ fontWeight: 500 }}>{t.name}</span> },
+    { key: "name", header: "Tenant Name", render: (t) => <span style={{ fontWeight: 500 }}>{t.name}</span> },
     {
-      key: "domains", header: "Domains",
-      render: (t) => (t.domains ?? []).join(", ") || "\u2014",
+      key: "domain", header: "Domain",
+      render: (t) => (t.domains ?? [])[0] || "\u2014",
+    },
+    {
+      key: "contact", header: "Contact",
+      render: () => (
+        <div>
+          <div style={{ fontSize: 14 }}>{"\u2014"}</div>
+          <small style={{ color: "#6B7280" }}>{"\u2014"}</small>
+        </div>
+      ),
     },
     {
       key: "status", header: "Status",
@@ -70,15 +84,31 @@ export function TenantList() {
       ),
     },
     {
-      key: "createdAt", header: "Created",
-      render: (t) => new Date(t.createdAt).toLocaleDateString(),
+      key: "users", header: "Users",
+      render: () => "\u2014",
     },
     {
       key: "actions", header: "Actions",
       render: (t) => (
         <div style={{ display: "flex", gap: 8 }}>
-          <Button variant="ghost" size="sm" onClick={() => openEdit(t)}>Edit</Button>
-          <Button variant="ghost" size="sm" style={{ color: "#dc2626" }} onClick={() => setDeleteTarget(t)}>Delete</Button>
+          <button
+            title="Edit"
+            onClick={() => openEdit(t)}
+            style={iconBtnStyle}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#F3F4F6"; e.currentTarget.style.borderColor = "#9CA3AF"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.borderColor = "#D1D5DB"; }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d={iconEdit} /></svg>
+          </button>
+          <button
+            title="Delete"
+            onClick={() => setDeleteTarget(t)}
+            style={iconBtnStyle}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#FEF2F2"; e.currentTarget.style.color = "#EF4444"; e.currentTarget.style.borderColor = "#FECACA"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.color = "#6B7280"; e.currentTarget.style.borderColor = "#D1D5DB"; }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d={iconDelete} /></svg>
+          </button>
         </div>
       ),
     },
@@ -86,18 +116,21 @@ export function TenantList() {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#111" }}>Tenants</h1>
-        <Button onClick={openCreate}>+ New Tenant</Button>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111", margin: 0 }}>Tenant Management</h1>
+        <Button onClick={openCreate}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Add Tenant
+        </Button>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          placeholder="Search tenants..."
-        />
-      </div>
+      <SearchBar
+        value={search}
+        onChange={setSearch}
+        placeholder="Search tenants by name, domain, or contact..."
+      />
 
       <DataTable
         columns={columns}
@@ -108,7 +141,7 @@ export function TenantList() {
         keyExtractor={(t) => t.id}
       />
 
-      {deleteError && <p style={{ color: "#dc2626", fontSize: 14, marginTop: 8 }}>{deleteError}</p>}
+      {deleteError && <p style={{ color: "#DC2626", fontSize: 14, marginTop: 8 }}>{deleteError}</p>}
 
       <TenantFormModal
         open={modalOpen}
@@ -130,3 +163,11 @@ export function TenantList() {
     </div>
   );
 }
+
+const iconBtnStyle: React.CSSProperties = {
+  width: 36, height: 36,
+  border: "1px solid #D1D5DB", background: "#fff",
+  borderRadius: 6, cursor: "pointer",
+  display: "flex", alignItems: "center", justifyContent: "center",
+  color: "#6B7280", transition: "all 0.2s",
+};
