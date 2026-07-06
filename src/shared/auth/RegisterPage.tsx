@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "./AuthContext.js";
+import { authService } from "../services/auth.js";
 
 interface RegisterPageProps {
   portalTitle?: string;
@@ -9,7 +9,6 @@ interface RegisterPageProps {
 
 export function RegisterPage({ portalTitle = "Portal", loginPath = "/login" }: RegisterPageProps) {
   const navigate = useNavigate();
-  const { register } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,18 +19,21 @@ export function RegisterPage({ portalTitle = "Portal", loginPath = "/login" }: R
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
     }
+
     if (password.length < 6) {
       setError("Password must be at least 6 characters");
       return;
     }
+
     setSubmitting(true);
     try {
-      await register(name, email, password);
-      navigate("/");
+      await authService.register({ name, email, password });
+      navigate(loginPath, { replace: true });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {

@@ -5,6 +5,7 @@ import { useAuth } from "./AuthContext.js";
 interface LoginPageProps {
   portalTitle?: string;
   registerPath?: string;
+  portalSelectPath?: string;
 }
 
 const featureItems = [
@@ -13,10 +14,10 @@ const featureItems = [
   "Advanced analytics dashboard",
 ];
 
-export function LoginPage({ portalTitle = "Portal", registerPath = "/register" }: LoginPageProps) {
+export function LoginPage({ portalTitle = "Portal", registerPath = "/register", portalSelectPath = "/portal-select" }: LoginPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -25,8 +26,17 @@ export function LoginPage({ portalTitle = "Portal", registerPath = "/register" }
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/";
 
   React.useEffect(() => {
-    if (isAuthenticated) navigate(from, { replace: true });
-  }, [isAuthenticated, navigate, from]);
+    if (!isAuthenticated || !user) return;
+
+    const portalAccess: string[] = user.portalAccess ?? [];
+    const hasMultiplePortals = new Set(portalAccess).size > 1;
+
+    if (hasMultiplePortals) {
+      navigate(portalSelectPath, { replace: true });
+    } else {
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, user, navigate, from, portalSelectPath]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

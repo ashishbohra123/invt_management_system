@@ -7,6 +7,7 @@ export interface User {
   role: Role;
   status: "active" | "inactive";
   tenantId?: string;
+  portalAccess?: string[];
   createdAt: string;
   updatedAt: string;
 }

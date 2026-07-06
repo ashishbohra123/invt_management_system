@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
-import { AuthProvider, ProtectedRoute, LoginPage, RegisterPage, useAuth } from "@moc/shared";
+import { AuthProvider, ProtectedRoute, LoginPage, RegisterPage, PortalSelectionPage, useAuth } from "@moc/shared";
 import { UserList } from "./pages/Users/index.js";
 import { TenantList } from "./pages/Tenants/index.js";
 import type { ReactNode } from "react";
@@ -56,8 +56,11 @@ export function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/admin/login" element={<LoginPage portalTitle="Admin Portal" />} />
+          <Route path="/admin/login" element={<LoginPage portalTitle="Admin Portal" registerPath="/admin/register" portalSelectPath="/admin/portal-select" />} />
           <Route path="/admin/register" element={<RegisterPage portalTitle="Admin Portal" loginPath="/admin/login" />} />
+          <Route path="/admin/portal-select" element={<ProtectedRoute portalType="admin" />}>
+            <Route index element={<PortalSelectionPage />} />
+          </Route>
           <Route element={<ProtectedRoute portalType="admin" />}>
             <Route path="/" element={<Layout><h1>Dashboard</h1><p>Welcome to the admin portal.</p></Layout>} />
             <Route path="/users" element={<Layout><UserList /></Layout>} />

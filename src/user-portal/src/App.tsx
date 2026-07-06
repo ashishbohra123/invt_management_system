@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
-import { AuthProvider, ProtectedRoute, LoginPage, RegisterPage, useAuth } from "@moc/shared";
+import { AuthProvider, ProtectedRoute, LoginPage, RegisterPage, PortalSelectionPage, useAuth } from "@moc/shared";
 import { ToastProvider } from "./components/ui/Toast";
 import { ProductList } from "./pages/Products/index";
 import { InventoryList } from "./pages/Inventory/index";
@@ -59,7 +59,10 @@ export function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage portalTitle="User Portal" />} />
-            <Route path="/register" element={<RegisterPage portalTitle="User Portal" loginPath="/login" />} />
+            <Route path="/register" element={<RegisterPage portalTitle="User Portal" />} />
+            <Route path="/portal-select" element={<ProtectedRoute portalType="user" />}>
+              <Route index element={<PortalSelectionPage />} />
+            </Route>
             <Route element={<ProtectedRoute portalType="user" />}>
               <Route path="/" element={<Layout><h1>Dashboard</h1><p>Welcome to the user portal.</p></Layout>} />
               <Route path="/products" element={<Layout><ProductList /></Layout>} />
