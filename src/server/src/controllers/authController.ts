@@ -57,7 +57,7 @@ export const authController = {
       }
       const hashed = await bcrypt.hash(password, 10);
       const roles = role ? [role] : ["viewer"];
-      const portals = Array.isArray(portalAccess) ? portalAccess : [];
+      const portals = Array.isArray(portalAccess) && portalAccess.length > 0 ? portalAccess : ["user"];
       const result = await pool.query(
         `INSERT INTO users (name, email, password, roles, portals, tenant_id)
          VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6)

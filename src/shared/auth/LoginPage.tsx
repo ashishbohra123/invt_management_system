@@ -29,14 +29,14 @@ export function LoginPage({ portalTitle = "Portal", registerPath = "/register", 
     if (!isAuthenticated || !user) return;
 
     const portalAccess: string[] = user.portalAccess ?? [];
-    const hasMultiplePortals = new Set(portalAccess).size > 1;
 
-    if (hasMultiplePortals) {
-      navigate(portalSelectPath, { replace: true });
+    if (portalAccess.length >= 1) {
+      const target = location.pathname.includes("/admin/") ? "/admin/portal-select" : portalSelectPath;
+      navigate(target, { replace: true });
     } else {
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, user, navigate, from, portalSelectPath]);
+  }, [isAuthenticated, user, navigate, from, portalSelectPath, location.pathname]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +59,7 @@ export function LoginPage({ portalTitle = "Portal", registerPath = "/register", 
         padding: "0 64px", boxSizing: "border-box",
       }}>
         <h1 style={{ fontSize: 40, fontWeight: 700, margin: 0, marginBottom: 8, letterSpacing: "-0.5px" }}>
-          IMS Portal
+          {portalTitle}
         </h1>
         <p style={{
           fontSize: 15, color: "#94a3b8", lineHeight: "26px",
@@ -83,7 +83,7 @@ export function LoginPage({ portalTitle = "Portal", registerPath = "/register", 
       }}>
         <div style={{ width: 380, marginTop: -40 }}>
           <p style={{ fontSize: 24, fontWeight: 700, color: "#2563eb", margin: "0 0 35px 0" }}>
-            IMS Portal
+            {portalTitle}
           </p>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111", margin: "0 0 6px 0" }}>
             Welcome back

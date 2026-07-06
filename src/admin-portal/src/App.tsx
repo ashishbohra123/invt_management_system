@@ -57,7 +57,7 @@ export function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/admin/login" element={<LoginPage portalTitle="Admin Portal" registerPath="/admin/register" portalSelectPath="/admin/portal-select" />} />
-          <Route path="/admin/register" element={<RegisterPage portalTitle="Admin Portal" loginPath="/admin/login" />} />
+          <Route path="/admin/register" element={<RegisterPage portalTitle="Admin Portal" loginPath="/admin/login" portalSelectPath="/admin/portal-select" />} />
           <Route path="/admin/portal-select" element={<ProtectedRoute portalType="admin" />}>
             <Route index element={<PortalSelectionPage />} />
           </Route>

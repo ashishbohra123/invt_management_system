@@ -5,9 +5,10 @@ import { authService } from "../services/auth.js";
 interface RegisterPageProps {
   portalTitle?: string;
   loginPath?: string;
+  portalSelectPath?: string;
 }
 
-export function RegisterPage({ portalTitle = "Portal", loginPath = "/login" }: RegisterPageProps) {
+export function RegisterPage({ portalTitle = "Portal", loginPath = "/login", portalSelectPath = "/portal-select" }: RegisterPageProps) {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -48,7 +49,7 @@ export function RegisterPage({ portalTitle = "Portal", loginPath = "/login" }: R
         display: "flex", flexDirection: "column", justifyContent: "center",
         padding: "0 80px", boxSizing: "border-box",
       }}>
-        <h1 style={{ fontSize: 40, fontWeight: 700, margin: "0 0 8px 0" }}>IMS Portal</h1>
+        <h1 style={{ fontSize: 40, fontWeight: 700, margin: "0 0 8px 0" }}>{portalTitle}</h1>
         <p style={{ fontSize: 15, color: "#94a3b8", lineHeight: 1.6, margin: "0 0 40px 0", maxWidth: 420 }}>
           Enterprise inventory management system. Real-time tracking, automated workflows, and powerful analytics — all in one place.
         </p>
@@ -68,7 +69,7 @@ export function RegisterPage({ portalTitle = "Portal", loginPath = "/login" }: R
       }}>
         <div style={{ width: 380 }}>
           <p style={{ fontSize: 24, fontWeight: 700, color: "#2563eb", margin: "0 0 32px 0" }}>
-            IMS Portal
+            {portalTitle}
           </p>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111", margin: "0 0 4px 0" }}>
             Create account
