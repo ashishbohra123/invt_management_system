@@ -1,20 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { API_PATHS, DataTable, Button, SearchBar, Badge } from "@moc/shared";
+import { usersService, DataTable, Button, SearchBar, Badge } from "@moc/shared";
+import type { User } from "@moc/shared";
 import type { Column } from "@moc/shared";
 import { UserFormModal } from "./UserFormModal";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  status: "active" | "inactive";
-  portalAccess?: string[];
-  createdAt: string;
-}
-
-const USERS_PATH = API_PATHS.USERS;
 const iconEdit = "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7 M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z";
 const iconDelete = "M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2";
 
@@ -41,15 +31,12 @@ export function UserList() {
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
-      if (search) params.set("search", search);
-      const res = await fetch(`${USERS_PATH}?${params}`, { signal: controller.signal });
-      if (!res.ok) throw new Error("Failed to fetch users");
-      const data = await res.json();
-      const items = Array.isArray(data) ? data : data.data ?? [];
-      setUsers(items);
-      setTotal(data.total ?? items.length);
-      setTotalPages(data.totalPages ?? Math.ceil((data.total ?? items.length) / pageSize));
+      const params: { page?: number; pageSize?: number; search?: string } = { page, pageSize };
+      if (search) params.search = search;
+      const res = await usersService.list(params, controller.signal);
+      setUsers(res.data ?? []);
+      setTotal(res.total ?? 0);
+      setTotalPages(res.totalPages ?? 1);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -67,8 +54,7 @@ export function UserList() {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
-      const res = await fetch(`${USERS_PATH}/${deleteTarget.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete user");
+      await usersService.delete(deleteTarget.id);
       setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
       setDeleteTarget(null);
       setDeleteError(null);

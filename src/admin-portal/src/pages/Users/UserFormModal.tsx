@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef, type FormEvent } from "react";
-import { Role, PortalType, isValidEmail, Modal, Input, Button } from "@moc/shared";
-
-const USERS_PATH = "/api/users";
+import { Role, PortalType, isValidEmail, Modal, Input, Button, usersService } from "@moc/shared";
 
 interface UserFormModalProps {
   open: boolean;
@@ -116,22 +114,21 @@ export function UserFormModal({ open, onClose, editUser, onSave }: UserFormModal
     if (!validate()) return;
     setSaving(true);
     try {
-      const body = {
-        name: form.name.trim(),
-        email: form.email.trim(),
-        role: form.role,
-        status: form.isActive ? "active" : "inactive",
-        portalAccess: form.portalAccess,
-        ...(isEdit ? {} : { password: form.password }),
-      };
-      const method = isEdit ? "PUT" : "POST";
-      const url = isEdit ? `${USERS_PATH}/${editUser!.id}` : USERS_PATH;
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) throw new Error(`Failed to ${isEdit ? "update" : "create"} user`);
+      if (isEdit) {
+        await usersService.update(editUser!.id, {
+          name: form.name.trim(),
+          email: form.email.trim(),
+          role: form.role as Role,
+          status: form.isActive ? "active" as const : "inactive" as const,
+        });
+      } else {
+        await usersService.create({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          password: form.password,
+          role: form.role as Role,
+        });
+      }
       setToast({ type: "success", message: `User ${isEdit ? "updated" : "created"} successfully` });
       setTimeout(() => { if (mountedRef.current) { onSave(); onClose(); } }, 800);
     } catch (err) {

@@ -1,3 +1,5 @@
+const TOKEN_KEY = "ims_auth_token";
+
 export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -7,11 +9,19 @@ export class ApiError extends Error {
   }
 }
 
+function getAuthHeaders(): Record<string, string> {
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) return { Authorization: `Bearer ${token}` };
+  } catch { /* localStorage unavailable */ }
+  return {};
+}
+
 export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
   const { headers: extraHeaders, ...rest } = options ?? {};
   const res = await fetch(url, {
     ...rest,
-    headers: { "Content-Type": "application/json", ...extraHeaders },
+    headers: { "Content-Type": "application/json", ...getAuthHeaders(), ...extraHeaders },
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
