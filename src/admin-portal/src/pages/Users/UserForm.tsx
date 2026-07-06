@@ -1,8 +1,8 @@
 import { useState, useEffect, FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Role } from "@moc/shared";
+import { API_PATHS, Role } from "@moc/shared";
 
-const USERS_PATH = "/api/users";
+const USERS_PATH = API_PATHS.USERS;
 
 interface FormData {
   name: string;
@@ -35,7 +35,8 @@ export function UserForm() {
       try {
         const res = await fetch(`${USERS_PATH}/${id}`);
         if (!res.ok) throw new Error("User not found");
-        const user = await res.json();
+        const json = await res.json();
+        const user = json.data ?? json;
         setForm({ name: user.name, email: user.email, role: user.role, status: user.status });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load user");

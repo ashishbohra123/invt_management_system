@@ -31,6 +31,8 @@ const ROLE_OPTIONS = [
 
 const PORTAL_OPTIONS = [
   { value: PortalType.ADMIN, label: "Admin Portal" },
+  { value: PortalType.PARTNER, label: "Partner Portal" },
+  { value: PortalType.CUSTOMER, label: "Customer Portal" },
 ];
 
 const initialForm = {
@@ -263,12 +265,12 @@ const modalStyle: React.CSSProperties = {
 
 const headerStyle: React.CSSProperties = {
   display: "flex", justifyContent: "space-between", alignItems: "center",
-  padding: "16px 20px", borderBottom: "1px solid #e0e0e0",
+  padding: "16px 20px", borderBottom: "1px solid #e5e7eb",
 };
 
 const closeBtnStyle: React.CSSProperties = {
   background: "none", border: "none", fontSize: 24, cursor: "pointer",
-  color: "#666", lineHeight: 1, padding: "0 4px",
+  color: "#9ca3af", lineHeight: 1, padding: "0 4px",
 };
 
 const bodyStyle: React.CSSProperties = { padding: "16px 20px" };
@@ -277,35 +279,38 @@ const fieldStyle: React.CSSProperties = { marginBottom: 16 };
 
 const labelStyle: React.CSSProperties = {
   display: "block", marginBottom: 4, fontWeight: 500, fontSize: 14,
+  color: "#374151",
 };
 
 const inputStyle: React.CSSProperties = {
-  width: "100%", padding: "8px 10px", border: "1px solid #ccc",
+  width: "100%", padding: "8px 10px", border: "1px solid #d1d5db",
   borderRadius: 4, boxSizing: "border-box", fontSize: 14, outline: "none",
 };
 
 const errorTextStyle: React.CSSProperties = {
-  color: "#d32f2f", fontSize: 12, marginTop: 2, display: "block",
+  color: "#dc2626", fontSize: 12, marginTop: 2, display: "block",
 };
 
 const footerStyle: React.CSSProperties = {
   display: "flex", justifyContent: "flex-end", gap: 8,
-  padding: "12px 20px", borderTop: "1px solid #e0e0e0",
+  padding: "12px 20px", borderTop: "1px solid #e5e7eb",
 };
 
 const cancelBtnStyle: React.CSSProperties = {
-  padding: "8px 16px", border: "1px solid #ccc", borderRadius: 4,
-  background: "#fff", cursor: "pointer", fontSize: 14,
+  padding: "8px 16px", border: "1px solid #d1d5db", borderRadius: 6,
+  background: "#fff", cursor: "pointer", fontSize: 14, color: "#374151",
+  fontWeight: 500,
 };
 
 const submitBtnStyle: React.CSSProperties = {
-  padding: "8px 16px", border: "none", borderRadius: 4,
-  background: "#1976d2", color: "#fff", cursor: "pointer", fontSize: 14,
+  padding: "8px 16px", border: "none", borderRadius: 6,
+  background: "#2563eb", color: "#fff", cursor: "pointer", fontSize: 14,
+  fontWeight: 600,
 };
 
 const toastStyle = (type: "success" | "error"): React.CSSProperties => ({
   position: "absolute", bottom: -56, left: 20, right: 20,
   padding: "10px 16px", borderRadius: 4, fontSize: 14, textAlign: "center",
-  color: "#fff", background: type === "success" ? "#2e7d32" : "#d32f2f",
+  color: "#fff", background: type === "success" ? "#166534" : "#991b1b",
   boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
 });

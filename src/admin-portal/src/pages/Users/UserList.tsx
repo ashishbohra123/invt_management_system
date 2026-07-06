@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { API_PATHS } from "@moc/shared";
 import { UserFormModal } from "./UserFormModal";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 
@@ -12,7 +13,7 @@ interface User {
   createdAt: string;
 }
 
-const USERS_PATH = "/api/users";
+const USERS_PATH = API_PATHS.USERS;
 
 export function UserList() {
   const [users, setUsers] = useState<User[]>([]);
@@ -41,20 +42,9 @@ export function UserList() {
       const res = await fetch(`${USERS_PATH}?${params}`, { signal: controller.signal });
       if (!res.ok) throw new Error("Failed to fetch users");
       const data = await res.json();
-      const inner = data.data;
-      const items = Array.isArray(inner)
-        ? inner
-        : Array.isArray(inner?.data)
-          ? inner.data
-          : [];
+      const items = Array.isArray(data) ? data : data.data ?? [];
       setUsers(items);
-      setTotalPages(
-        inner?.totalPages ??
-          Math.max(
-            1,
-            Math.ceil((inner?.total ?? items.length) / pageSize)
-          )
-      );
+      setTotalPages(data.totalPages ?? Math.ceil((data.total ?? items.length) / pageSize));
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -102,55 +92,64 @@ export function UserList() {
 
   return (
     <div>
-      <h1>Users</h1>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+      <div style={headerRow}>
+        <h1 style={pageTitle}>Users</h1>
+        <button onClick={openCreate} style={primaryBtn}>
+          + New User
+        </button>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
         <input
           type="text"
           placeholder="Search users..."
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          style={{ padding: 8, width: 300 }}
+          style={searchInput}
         />
-        <button onClick={openCreate} style={newBtnStyle}>
-          + New User
-        </button>
       </div>
 
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {deleteError && <p style={{ color: "red" }}>{deleteError}</p>}
+      {loading && <p style={loadingText}>Loading...</p>}
+      {error && <p style={errorText}>{error}</p>}
+      {deleteError && <p style={errorText}>{deleteError}</p>}
 
       {!loading && !error && (
-        <div style={{ overflowX: "auto", borderRadius: 8, border: "1px solid #e0e0e0" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <div style={tableWrap}>
+        <table style={table}>
           <thead>
-            <tr style={{ background: "#f5f5f5", textAlign: "left" }}>
-              <th style={thStyle}>Name</th>
-              <th style={thStyle}>Email</th>
-              <th style={thStyle}>Role</th>
-              <th style={thStyle}>Status</th>
-              <th style={thStyle}>Created</th>
-              <th style={thStyle}>Actions</th>
+            <tr>
+              <th style={th}>Name</th>
+              <th style={th}>Email</th>
+              <th style={th}>Role</th>
+              <th style={th}>Status</th>
+              <th style={th}>Created</th>
+              <th style={th}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {users.length === 0 && (
-              <tr><td colSpan={6} style={{ padding: 24, textAlign: "center" }}>No users found.</td></tr>
+              <tr><td colSpan={6} style={emptyState}>No users found.</td></tr>
             )}
             {users.map((user) => (
-              <tr key={user.id} style={{ borderBottom: "1px solid #e0e0e0" }}>
-                <td style={tdStyle}>{user.name}</td>
-                <td style={tdStyle}>{user.email}</td>
-                <td style={tdStyle}>{user.role}</td>
-                <td style={tdStyle}>
-                  <span style={{ color: user.status === "active" ? "#2e7d32" : "#d32f2f" }}>
+              <tr key={user.id} style={rowStyle}>
+                <td style={td}>{user.name}</td>
+                <td style={td}>{user.email}</td>
+                <td style={td}>
+                  <span style={roleBadge}>{user.role}</span>
+                </td>
+                <td style={td}>
+                  <span style={{
+                    ...statusBadge,
+                    background: user.status === "active" ? "#dcfce7" : "#fef2f2",
+                    color: user.status === "active" ? "#166534" : "#991b1b",
+                  }}>
                     {user.status}
                   </span>
                 </td>
-                <td style={tdStyle}>{new Date(user.createdAt).toLocaleDateString()}</td>
-                <td style={tdStyle}>
-                  <button onClick={() => openEdit(user)} style={editBtnStyle}>Edit</button>
-                  <button onClick={() => setDeleteTarget(user)} style={deleteBtnStyle}>
+                <td style={td}>{new Date(user.createdAt).toLocaleDateString()}</td>
+                <td style={td}>
+                  <button onClick={() => openEdit(user)} style={actionBtn}>Edit</button>
+                  <button onClick={() => setDeleteTarget(user)} style={actionDangerBtn}>
                     Delete
                   </button>
                 </td>
@@ -161,10 +160,10 @@ export function UserList() {
         </div>
       )}
 
-      <div style={{ marginTop: 16, display: "flex", justifyContent: "center", gap: 8 }}>
-        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} style={btnStyle}>Previous</button>
-        <span style={{ padding: "8px 0" }}>Page {page} of {totalPages}</span>
-        <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} style={btnStyle}>Next</button>
+      <div style={paginationRow}>
+        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} style={pageBtn}>Previous</button>
+        <span style={pageInfo}>Page {page} of {totalPages}</span>
+        <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} style={pageBtn}>Next</button>
       </div>
 
       <UserFormModal
@@ -188,17 +187,76 @@ export function UserList() {
   );
 }
 
-const thStyle: React.CSSProperties = { padding: 12, fontWeight: 600, borderBottom: "2px solid #e0e0e0" };
-const tdStyle: React.CSSProperties = { padding: 12 };
-const btnStyle: React.CSSProperties = { padding: "8px 16px", cursor: "pointer" };
-const newBtnStyle: React.CSSProperties = {
-  padding: "8px 16px", background: "#1976d2", color: "#fff",
-  border: "none", borderRadius: 4, cursor: "pointer", fontSize: 14,
+const pageTitle: React.CSSProperties = {
+  margin: 0, fontSize: 24, fontWeight: 700, color: "#111",
 };
-const editBtnStyle: React.CSSProperties = {
-  marginRight: 8, color: "#1976d2", border: "none",
-  background: "none", cursor: "pointer", fontSize: 14,
+const headerRow: React.CSSProperties = {
+  display: "flex", justifyContent: "space-between", alignItems: "center",
+  marginBottom: 20,
 };
-const deleteBtnStyle: React.CSSProperties = {
-  color: "#d32f2f", border: "none", background: "none", cursor: "pointer", fontSize: 14,
+const primaryBtn: React.CSSProperties = {
+  padding: "10px 20px", background: "#2563eb", color: "#fff",
+  border: "none", borderRadius: 8, cursor: "pointer", fontSize: 14,
+  fontWeight: 600,
+};
+const searchInput: React.CSSProperties = {
+  padding: "10px 14px", width: 320, fontSize: 14,
+  border: "1px solid #d1d5db", borderRadius: 8, outline: "none",
+  boxSizing: "border-box",
+};
+const loadingText: React.CSSProperties = {
+  color: "#6b7280", fontSize: 14,
+};
+const errorText: React.CSSProperties = {
+  color: "#dc2626", fontSize: 14,
+};
+const tableWrap: React.CSSProperties = {
+  overflowX: "auto", borderRadius: 8, border: "1px solid #e5e7eb",
+  background: "#fff",
+};
+const table: React.CSSProperties = {
+  width: "100%", borderCollapse: "collapse", fontSize: 14,
+};
+const th: React.CSSProperties = {
+  padding: "12px 16px", fontWeight: 600, color: "#374151",
+  borderBottom: "1px solid #e5e7eb", background: "#f9fafb",
+  whiteSpace: "nowrap", textAlign: "left", fontSize: 13,
+  textTransform: "uppercase", letterSpacing: "0.05em",
+};
+const td: React.CSSProperties = {
+  padding: "12px 16px", borderBottom: "1px solid #e5e7eb",
+  color: "#374151",
+};
+const rowStyle: React.CSSProperties = {
+  borderBottom: "1px solid #e5e7eb",
+};
+const emptyState: React.CSSProperties = {
+  padding: 32, textAlign: "center", color: "#9ca3af", fontSize: 14,
+};
+const statusBadge: React.CSSProperties = {
+  display: "inline-block", padding: "2px 10px", borderRadius: 9999,
+  fontSize: 12, fontWeight: 600,
+};
+const roleBadge: React.CSSProperties = {
+  display: "inline-block", padding: "2px 10px", borderRadius: 6,
+  fontSize: 12, fontWeight: 500, background: "#f3f4f6", color: "#374151",
+};
+const paginationRow: React.CSSProperties = {
+  marginTop: 16, display: "flex", justifyContent: "center", alignItems: "center", gap: 12,
+};
+const pageBtn: React.CSSProperties = {
+  padding: "8px 16px", border: "1px solid #d1d5db", borderRadius: 6,
+  background: "#fff", cursor: "pointer", fontSize: 14, color: "#374151",
+  fontWeight: 500,
+};
+const pageInfo: React.CSSProperties = {
+  padding: "8px 0", fontSize: 14, color: "#6b7280",
+};
+const actionBtn: React.CSSProperties = {
+  marginRight: 8, color: "#2563eb", border: "none",
+  background: "none", cursor: "pointer", fontSize: 14, fontWeight: 500,
+};
+const actionDangerBtn: React.CSSProperties = {
+  color: "#dc2626", border: "none", background: "none",
+  cursor: "pointer", fontSize: 14, fontWeight: 500,
 };

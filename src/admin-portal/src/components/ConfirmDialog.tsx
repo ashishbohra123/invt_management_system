@@ -36,8 +36,8 @@ export function ConfirmDialog({
     <>
       <div style={overlayStyle} onClick={onCancel} />
       <div style={dialogStyle} role="dialog" aria-modal="true">
-        <h3 style={{ margin: "0 0 8px", fontSize: 16 }}>{title}</h3>
-        <p style={{ margin: 0, fontSize: 14, color: "#555", lineHeight: 1.5 }}>{message}</p>
+        <h3 style={{ margin: "0 0 8px", fontSize: 18, fontWeight: 700, color: "#111" }}>{title}</h3>
+        <p style={{ margin: 0, fontSize: 14, color: "#6b7280", lineHeight: 1.5 }}>{message}</p>
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 20 }}>
           <button onClick={onCancel} style={cancelBtnStyle}>{cancelLabel}</button>
           <button onClick={onConfirm} style={confirmStyle === "danger" ? dangerBtnStyle : primaryBtnStyle}>
@@ -50,7 +50,7 @@ export function ConfirmDialog({
 }
 
 const overlayStyle: React.CSSProperties = {
-  position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 1001,
+  position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1001,
 };
 
 const dialogStyle: React.CSSProperties = {
@@ -60,16 +60,19 @@ const dialogStyle: React.CSSProperties = {
 };
 
 const cancelBtnStyle: React.CSSProperties = {
-  padding: "8px 16px", border: "1px solid #ccc", borderRadius: 4,
-  background: "#fff", cursor: "pointer", fontSize: 14,
+  padding: "8px 16px", border: "1px solid #d1d5db", borderRadius: 6,
+  background: "#fff", cursor: "pointer", fontSize: 14, color: "#374151",
+  fontWeight: 500,
 };
 
 const dangerBtnStyle: React.CSSProperties = {
-  padding: "8px 16px", border: "none", borderRadius: 4,
-  background: "#d32f2f", color: "#fff", cursor: "pointer", fontSize: 14,
+  padding: "8px 16px", border: "none", borderRadius: 6,
+  background: "#dc2626", color: "#fff", cursor: "pointer", fontSize: 14,
+  fontWeight: 600,
 };
 
 const primaryBtnStyle: React.CSSProperties = {
-  padding: "8px 16px", border: "none", borderRadius: 4,
-  background: "#1976d2", color: "#fff", cursor: "pointer", fontSize: 14,
+  padding: "8px 16px", border: "none", borderRadius: 6,
+  background: "#2563eb", color: "#fff", cursor: "pointer", fontSize: 14,
+  fontWeight: 600,
 };
