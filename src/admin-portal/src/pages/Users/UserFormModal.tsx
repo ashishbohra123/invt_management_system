@@ -119,6 +119,7 @@ export function UserFormModal({ open, onClose, editUser, onSave }: UserFormModal
           email: form.email.trim(),
           role: form.role as Role,
           status: form.isActive ? "active" as const : "inactive" as const,
+          portalAccess: form.portalAccess,
         });
       } else {
         await usersService.create({
@@ -126,6 +127,7 @@ export function UserFormModal({ open, onClose, editUser, onSave }: UserFormModal
           email: form.email.trim(),
           password: form.password,
           role: form.role as Role,
+          portalAccess: form.portalAccess,
         });
       }
       setToast({ type: "success", message: `User ${isEdit ? "updated" : "created"} successfully` });

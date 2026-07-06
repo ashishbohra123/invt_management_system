@@ -18,6 +18,7 @@ export interface CreateUserInput {
   password: string;
   role: Role;
   tenantId?: string;
+  portalAccess?: string[];
 }
 
 export interface UpdateUserInput {
@@ -25,6 +26,7 @@ export interface UpdateUserInput {
   email?: string;
   role?: Role;
   status?: "active" | "inactive";
+  portalAccess?: string[];
 }
 
 export interface UserListResponse {
