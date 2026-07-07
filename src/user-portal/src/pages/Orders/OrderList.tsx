@@ -33,9 +33,11 @@ export function OrderList() {
   const [newProductId, setNewProductId] = useState("");
   const [newQty, setNewQty] = useState("1");
   const [createSaving, setCreateSaving] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [actionTarget, setActionTarget] = useState<Order | null>(null);
   const [actionType, setActionType] = useState<"approve" | "cancel" | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const fetchItems = useCallback(async () => {
@@ -59,23 +61,26 @@ export function OrderList() {
   useEffect(() => () => { if (abortRef.current) abortRef.current.abort(); }, []);
 
   const handleCreate = async () => {
-    if (!newProductId.trim()) { setError("Product ID is required"); return; }
+    if (!newProductId.trim()) { setCreateError("Product ID is required"); return; }
     const qty = parseInt(newQty, 10);
-    if (isNaN(qty) || qty < 1) { setError("Valid quantity required"); return; }
+    if (isNaN(qty) || qty < 1) { setCreateError("Valid quantity required"); return; }
     setCreateSaving(true);
+    setCreateError(null);
     try {
       await ordersService.create({ product_id: newProductId.trim(), quantity: qty } as any);
       setCreateOpen(false);
       setNewProductId("");
       setNewQty("1");
+      setCreateError(null);
       fetchItems();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create order");
+      setCreateError(err instanceof Error ? err.message : "Failed to create order");
     } finally { setCreateSaving(false); }
   };
 
   const handleAction = async () => {
     if (!actionTarget || !actionType) return;
+    setActionError(null);
     try {
       if (actionType === "approve") {
         await ordersService.approve(actionTarget.id);
@@ -84,9 +89,10 @@ export function OrderList() {
       }
       setActionTarget(null);
       setActionType(null);
+      setActionError(null);
       fetchItems();
     } catch (err) {
-      setError(err instanceof Error ? err.message : `Failed to ${actionType} order`);
+      setActionError(err instanceof Error ? err.message : `Failed to ${actionType} order`);
     }
   };
 
@@ -169,14 +175,15 @@ export function OrderList() {
       <Modal
         open={createOpen}
         title="New Order"
-        onClose={() => { setCreateOpen(false); setNewProductId(""); setNewQty("1"); }}
+        onClose={() => { setCreateOpen(false); setNewProductId(""); setNewQty("1"); setCreateError(null); }}
         footer={
           <div style={{ display: "flex", gap: 8 }}>
-            <Button variant="secondary" onClick={() => { setCreateOpen(false); setNewProductId(""); setNewQty("1"); }}>Cancel</Button>
+            <Button variant="secondary" onClick={() => { setCreateOpen(false); setNewProductId(""); setNewQty("1"); setCreateError(null); }}>Cancel</Button>
             <Button disabled={createSaving} onClick={handleCreate}>{createSaving ? "Creating..." : "Create Order"}</Button>
           </div>
         }
       >
+        {createError && <p style={{ color: "#DC2626", fontSize: 14, margin: "0 0 12px", padding: "8px 12px", background: "#FEF2F2", borderRadius: 6 }}>{createError}</p>}
         <div style={{ marginBottom: 12 }}>
           <label style={{ display: "block", marginBottom: 6, fontWeight: 500, fontSize: 14, color: "#374151" }}>Product</label>
           <select value={newProductId} onChange={(e) => setNewProductId(e.target.value)} style={selectStyle}>
@@ -193,16 +200,17 @@ export function OrderList() {
       <Modal
         open={actionTarget !== null}
         title={actionType === "approve" ? "Approve Order" : "Cancel Order"}
-        onClose={() => { setActionTarget(null); setActionType(null); }}
+        onClose={() => { setActionTarget(null); setActionType(null); setActionError(null); }}
         footer={
           <div style={{ display: "flex", gap: 8 }}>
-            <Button variant="secondary" onClick={() => { setActionTarget(null); setActionType(null); }}>Back</Button>
+            <Button variant="secondary" onClick={() => { setActionTarget(null); setActionType(null); setActionError(null); }}>Back</Button>
             <Button variant={actionType === "cancel" ? "danger" : "primary"} onClick={handleAction}>
               {actionType === "approve" ? "Approve" : "Cancel"}
             </Button>
           </div>
         }
       >
+        {actionError && <p style={{ color: "#DC2626", fontSize: 14, margin: "0 0 12px", padding: "8px 12px", background: "#FEF2F2", borderRadius: 6 }}>{actionError}</p>}
         <p style={{ margin: 0, fontSize: 14, color: "#6B7280", lineHeight: 1.5 }}>
           Are you sure you want to {actionType} order {actionTarget?.id}?
         </p>

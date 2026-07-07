@@ -30,10 +30,12 @@ export function InventoryList() {
   const [updating, setUpdating] = useState<InventoryItem | null>(null);
   const [updateQty, setUpdateQty] = useState("");
   const [updateSaving, setUpdateSaving] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createProductId, setCreateProductId] = useState("");
   const [createQty, setCreateQty] = useState("0");
   const [createSaving, setCreateSaving] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -65,18 +67,20 @@ export function InventoryList() {
   const inStockCount = total - lowStockCount - outOfStockCount;
 
   const handleCreate = async () => {
-    if (!createProductId.trim()) { setError("Product ID is required"); return; }
+    if (!createProductId.trim()) { setCreateError("Product ID is required"); return; }
     const qty = parseInt(createQty, 10);
-    if (isNaN(qty) || qty < 0) { setError("Valid quantity required"); return; }
+    if (isNaN(qty) || qty < 0) { setCreateError("Valid quantity required"); return; }
     setCreateSaving(true);
+    setCreateError(null);
     try {
       await inventoryService.create({ product_id: createProductId.trim(), current_inventory: qty } as any);
       setCreateOpen(false);
       setCreateProductId("");
       setCreateQty("0");
+      setCreateError(null);
       fetchItems();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create inventory item");
+      setCreateError(err instanceof Error ? err.message : "Failed to create inventory item");
     } finally { setCreateSaving(false); }
   };
 
@@ -85,13 +89,15 @@ export function InventoryList() {
     const qty = parseInt(updateQty, 10);
     if (isNaN(qty) || qty < 0) return;
     setUpdateSaving(true);
+    setUpdateError(null);
     try {
       await inventoryService.update(updating.id, { current_inventory: qty } as any);
       setUpdating(null);
       setUpdateQty("");
+      setUpdateError(null);
       fetchItems();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update stock");
+      setUpdateError(err instanceof Error ? err.message : "Failed to update stock");
     } finally { setUpdateSaving(false); }
   };
 
@@ -183,7 +189,7 @@ export function InventoryList() {
       <Modal
         open={createOpen}
         title="Add Inventory Item"
-        onClose={() => { setCreateOpen(false); setCreateProductId(""); setCreateQty("0"); }}
+        onClose={() => { setCreateOpen(false); setCreateProductId(""); setCreateQty("0"); setCreateError(null); }}
         footer={
           <div style={{ display: "flex", gap: 8 }}>
             <Button variant="secondary" onClick={() => { setCreateOpen(false); setCreateProductId(""); setCreateQty("0"); }}>Cancel</Button>
@@ -191,6 +197,7 @@ export function InventoryList() {
           </div>
         }
       >
+        {createError && <p style={{ color: "#DC2626", fontSize: 14, margin: "0 0 12px", padding: "8px 12px", background: "#FEF2F2", borderRadius: 6 }}>{createError}</p>}
         <div style={{ marginBottom: 16 }}>
           <label style={{ display: "block", marginBottom: 6, fontWeight: 500, fontSize: 14, color: "#374151" }}>Product</label>
           <select value={createProductId} onChange={(e) => setCreateProductId(e.target.value)} style={selectStyle}>
@@ -207,14 +214,15 @@ export function InventoryList() {
       <Modal
         open={updating !== null}
         title={`Update Stock - ${updating?.productName ?? ""}`}
-        onClose={() => { setUpdating(null); setUpdateQty(""); }}
+        onClose={() => { setUpdating(null); setUpdateQty(""); setUpdateError(null); }}
         footer={
           <div style={{ display: "flex", gap: 8 }}>
-            <Button variant="secondary" onClick={() => { setUpdating(null); setUpdateQty(""); }}>Cancel</Button>
+            <Button variant="secondary" onClick={() => { setUpdating(null); setUpdateQty(""); setUpdateError(null); }}>Cancel</Button>
             <Button disabled={updateSaving} onClick={handleUpdate}>{updateSaving ? "Saving..." : "Save"}</Button>
           </div>
         }
       >
+        {updateError && <p style={{ color: "#DC2626", fontSize: 14, margin: "0 0 12px", padding: "8px 12px", background: "#FEF2F2", borderRadius: 6 }}>{updateError}</p>}
         <div style={{ marginBottom: 16 }}>
           <label style={{ display: "block", marginBottom: 6, fontWeight: 500, fontSize: 14, color: "#374151" }}>SKU</label>
           <div style={{ fontSize: 14, color: "#6B7280" }}>{updating?.productSku}</div>

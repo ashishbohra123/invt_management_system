@@ -24,6 +24,7 @@ export function ProductList() {
   const [sort, setSort] = useState("latest");
   const [createOpen, setCreateOpen] = useState(false);
   const [createSaving, setCreateSaving] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [form, setForm] = useState({ sku: "", name: "", category: "", costPerUnit: "", reorderThreshold: "10" });
   const abortRef = useRef<AbortController | null>(null);
 
@@ -58,8 +59,9 @@ export function ProductList() {
   useEffect(() => () => { if (abortRef.current) abortRef.current.abort(); }, []);
 
   const handleCreate = async () => {
-    if (!form.sku.trim() || !form.name.trim()) { setError("SKU and Name are required"); return; }
+    if (!form.sku.trim() || !form.name.trim()) { setCreateError("SKU and Name are required"); return; }
     setCreateSaving(true);
+    setCreateError(null);
     try {
       await productsService.create({
         sku: form.sku.trim(),
@@ -70,9 +72,10 @@ export function ProductList() {
       } as any);
       setCreateOpen(false);
       setForm({ sku: "", name: "", category: "", costPerUnit: "", reorderThreshold: "10" });
+      setCreateError(null);
       fetchItems();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create product");
+      setCreateError(err instanceof Error ? err.message : "Failed to create product");
     } finally { setCreateSaving(false); }
   };
 
@@ -141,14 +144,15 @@ export function ProductList() {
       <Modal
         open={createOpen}
         title="Add Product"
-        onClose={() => { setCreateOpen(false); setForm({ sku: "", name: "", category: "", costPerUnit: "", reorderThreshold: "10" }); }}
+        onClose={() => { setCreateOpen(false); setForm({ sku: "", name: "", category: "", costPerUnit: "", reorderThreshold: "10" }); setCreateError(null); }}
         footer={
           <div style={{ display: "flex", gap: 8 }}>
-            <Button variant="secondary" onClick={() => { setCreateOpen(false); setForm({ sku: "", name: "", category: "", costPerUnit: "", reorderThreshold: "10" }); }}>Cancel</Button>
+            <Button variant="secondary" onClick={() => { setCreateOpen(false); setForm({ sku: "", name: "", category: "", costPerUnit: "", reorderThreshold: "10" }); setCreateError(null); }}>Cancel</Button>
             <Button disabled={createSaving} onClick={handleCreate}>{createSaving ? "Creating..." : "Create Product"}</Button>
           </div>
         }
       >
+        {createError && <p style={{ color: "#DC2626", fontSize: 14, margin: "0 0 12px", padding: "8px 12px", background: "#FEF2F2", borderRadius: 6 }}>{createError}</p>}
         <div style={fieldStyle}>
           <label style={labelStyle}>SKU *</label>
           <Input value={form.sku} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, sku: e.target.value }))} placeholder="PROD-001" />
