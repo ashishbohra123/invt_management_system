@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { DataTable, SearchBar, Button, Badge, Card, CardContent, Modal, Input } from "@moc/shared";
+import { DataTable, SearchBar, Button, Badge, Card, CardContent, Modal, Input, productsService, apiPost, ApiError, API_PATHS } from "@moc/shared";
 import type { Column } from "@moc/shared";
 import { CATEGORIES } from "@moc/shared";
 
@@ -8,8 +8,6 @@ interface Product {
   reorderThreshold: number; costPerUnit: number; tenantId: string;
   createdAt: string; updatedAt: string;
 }
-
-const API_PATH = "/api/products";
 
 const categoryOptions = Object.values(CATEGORIES);
 
@@ -47,17 +45,12 @@ function AddProductModal({ open, onClose, onCreated }: { open: boolean; onClose:
     if (!form.name || !form.sku) { setError("Name and SKU are required"); return; }
     setSaving(true); setError(null);
     try {
-      const res = await fetch(API_PATH, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: form.name, sku: form.sku,
-          category: form.category || undefined,
-          cost_per_unit: form.costPerUnit ? parseFloat(form.costPerUnit) : undefined,
-          reorder_threshold: parseInt(form.reorderThreshold, 10),
-        }),
+      await apiPost(API_PATHS.PRODUCTS, {
+        name: form.name, sku: form.sku,
+        category: form.category || undefined,
+        cost_per_unit: form.costPerUnit ? parseFloat(form.costPerUnit) : undefined,
+        reorder_threshold: parseInt(form.reorderThreshold, 10),
       });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to create product"); }
       onCreated();
       onClose();
       setForm({ name: "", sku: "", category: "", costPerUnit: "", reorderThreshold: "10" });
@@ -122,29 +115,21 @@ export function ProductList() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [addOpen, setAddOpen] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
   const pageSize = 10;
 
   const fetchItems = useCallback(async () => {
-    if (abortRef.current) abortRef.current.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
     setLoading(true); setError(null);
     try {
-      const res = await fetch(API_PATH, { signal: controller.signal });
-      if (!res.ok) throw new Error("Failed to fetch products");
-      const data = await res.json();
-      const list = Array.isArray(data) ? data : data?.data ?? [];
+      const result = await productsService.list();
+      const list = result?.data ?? [];
       setItems(list);
       setTotalPages(Math.max(1, Math.ceil(list.length / pageSize)));
     } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally { setLoading(false); }
   }, [pageSize]);
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
-  useEffect(() => () => { if (abortRef.current) abortRef.current.abort(); }, []);
 
   const filtered = useMemo(() => {
     let result = items;

@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { DataTable, Button, Badge, Modal, Input } from "@moc/shared";
+import { useState, useEffect, useCallback } from "react";
+import { DataTable, Button, Badge, Modal, Input, ordersService, productsService, apiPost, apiPut, API_PATHS } from "@moc/shared";
 import { useToast } from "../../components/ui/Toast";
 import type { Column } from "@moc/shared";
 
@@ -10,7 +10,6 @@ interface Order {
   createdAt: string; updatedAt: string;
 }
 
-const API_PATH = "/api/orders";
 const PAGE_SIZE = 10;
 
 const STATUS_CONFIG: Record<string, { label: string; variant: "info" | "success" | "danger" | "default" }> = {
@@ -63,41 +62,26 @@ export function OrderList() {
   const [actionTarget, setActionTarget] = useState<Order | null>(null);
   const [actionType, setActionType] = useState<"approve" | "cancel" | null>(null);
   const [detailTarget, setDetailTarget] = useState<Order | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
 
   const fetchItems = useCallback(async () => {
-    if (abortRef.current) abortRef.current.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
     setLoading(true); setError(null);
     try {
       const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
       if (statusFilter) params.set("status", statusFilter);
-      const res = await fetch(`${API_PATH}?${params}`, { signal: controller.signal });
-      if (!res.ok) throw new Error("Failed to fetch orders");
-      const json = await res.json();
-      const payload = json.data ?? json;
-      const list = Array.isArray(payload) ? payload : Array.isArray(payload.data) ? payload.data : [];
-      setItems(list);
-      setTotalPages(payload.totalPages ?? Math.max(1, Math.ceil((payload.total ?? list.length) / PAGE_SIZE)));
+      const result = await ordersService.list(params.toString());
+      setItems(result?.data ?? []);
+      setTotalPages(result?.totalPages ?? 1);
     } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally { setLoading(false); }
   }, [page, statusFilter]);
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
-  useEffect(() => () => { if (abortRef.current) abortRef.current.abort(); }, []);
 
   const handleCreate = async () => {
     try {
-      const res = await fetch(API_PATH, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ product_id: newOrder.productId, quantity: newOrder.quantity }),
-      });
-      if (!res.ok) throw new Error("Failed to create order");
+      await apiPost(API_PATHS.ORDERS, { product_id: newOrder.productId, quantity: newOrder.quantity });
       setCreateOpen(false);
       setNewOrder({ productId: "", quantity: 1 });
       toast("Order created successfully", "success");
@@ -110,20 +94,20 @@ export function OrderList() {
   const openCreateModal = async () => {
     setCreateOpen(true);
     try {
-      const res = await fetch("/api/products");
-      if (res.ok) {
-        const data = await res.json();
-        const list = Array.isArray(data) ? data : data?.data ?? [];
-        setProducts(list.map((p: { id: string; name: string; sku: string }) => ({ id: p.id, name: p.name, sku: p.sku })));
-      }
+      const result = await productsService.list();
+      const list = result?.data ?? [];
+      setProducts(list.map((p: { id: string; name: string; sku: string }) => ({ id: p.id, name: p.name, sku: p.sku })));
     } catch { /* silently ignore product fetch failure */ }
   };
 
   const handleAction = async () => {
     if (!actionTarget || !actionType) return;
     try {
-      const res = await fetch(`${API_PATH}/${actionTarget.id}/${actionType}`, { method: "PUT" });
-      if (!res.ok) throw new Error(`Failed to ${actionType} order`);
+      if (actionType === "approve") {
+        await ordersService.approve(actionTarget.id);
+      } else {
+        await ordersService.cancel(actionTarget.id);
+      }
       setActionTarget(null);
       setActionType(null);
       setDetailTarget(null);
