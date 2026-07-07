@@ -11,17 +11,17 @@ interface Order {
 
 const tabs = [
   { label: "All", value: "" },
-  { label: "Pending", value: "created" },
-  { label: "Approved", value: "approved" },
+  { label: "Created", value: "created" },
+  { label: "Confirmed", value: "approved" },
   { label: "Cancelled", value: "cancelled" },
 ];
 
 const statusColors: Record<string, "info" | "success" | "warning" | "danger" | "default"> = {
-  created: "warning", approved: "success", cancelled: "danger",
+  created: "info", approved: "success", cancelled: "danger",
 };
 
 const statusLabels: Record<string, string> = {
-  created: "Pending", approved: "Approved", cancelled: "Cancelled",
+  created: "Created", approved: "Confirmed", cancelled: "Cancelled",
 };
 
 export function OrderList() {
