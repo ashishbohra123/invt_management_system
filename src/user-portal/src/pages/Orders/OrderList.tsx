@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Button, Card, CardContent, Badge } from "@moc/shared";
+import { Button, Card, CardContent, Badge, ordersService } from "@moc/shared";
 
 interface Order {
   id: string; productId: string; productName: string; productSku: string;
@@ -7,8 +7,6 @@ interface Order {
   createdBy: string; approvedBy?: string; cancelledBy?: string;
   createdAt: string; updatedAt: string;
 }
-
-const API_PATH = "/api/orders";
 
 const tabs = [
   { label: "All", value: "" },
@@ -39,11 +37,9 @@ export function OrderList() {
     abortRef.current = controller;
     setLoading(true); setError(null);
     try {
-      const params = tab ? `?status=${tab}` : "";
-      const res = await fetch(`${API_PATH}${params}`, { signal: controller.signal });
-      if (!res.ok) throw new Error("Failed to fetch orders");
-      const data = await res.json();
-      const list = Array.isArray(data) ? data : data.data ?? [];
+      const params = tab ? `status=${tab}` : "";
+      const res = await ordersService.list(params);
+      const list = Array.isArray(res) ? res : res.data ?? [];
       setItems(list);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
@@ -94,30 +90,28 @@ export function OrderList() {
         {items.length === 0 && (
           <p style={{ color: "#9CA3AF", textAlign: "center", padding: 32 }}>No orders found.</p>
         )}
-        {items.map((order) => {
-          return (
-            <Card key={order.id}>
-              <CardContent style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-                    <span style={{ fontWeight: 600, fontSize: 14, color: "#111" }}>{order.id}</span>
-                    <Badge variant={statusColors[order.status] || "default"}>
-                      {statusLabels[order.status] || order.status}
-                    </Badge>
-                  </div>
-                  <div style={{ fontSize: 13, color: "#6B7280" }}>
-                    {order.productName} x{order.quantity}
-                  </div>
+        {items.map((order) => (
+          <Card key={order.id}>
+            <CardContent style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                  <span style={{ fontWeight: 600, fontSize: 14, color: "#111" }}>{order.id}</span>
+                  <Badge variant={statusColors[order.status] || "default"}>
+                    {statusLabels[order.status] || order.status}
+                  </Badge>
                 </div>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 12, color: "#9CA3AF" }}>
-                    {new Date(order.createdAt).toLocaleDateString()}
-                  </div>
+                <div style={{ fontSize: 13, color: "#6B7280" }}>
+                  {order.productName} x{order.quantity}
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 12, color: "#9CA3AF" }}>
+                  {new Date(order.createdAt).toLocaleDateString()}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );
