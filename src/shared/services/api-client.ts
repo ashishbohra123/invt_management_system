@@ -1,6 +1,6 @@
 const TOKEN_KEY = "ims_auth_token";
 
-export class ApiError extends Error {
+class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
     super(message);
@@ -17,7 +17,7 @@ function getAuthHeaders(): Record<string, string> {
   return {};
 }
 
-export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
+async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
   const { headers: extraHeaders, ...rest } = options ?? {};
   const res = await fetch(url, {
     ...rest,

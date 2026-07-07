@@ -12,8 +12,6 @@ export const usersService = {
     return apiGet<UserListResponse>(`${API_PATHS.USERS}${qs ? `?${qs}` : ""}`, { signal });
   },
 
-  get: (id: string) => apiGet<User>(`${API_PATHS.USERS}/${id}`),
-
   create: (data: CreateUserInput) => apiPost<User>(API_PATHS.USERS, data),
 
   update: (id: string, data: UpdateUserInput) => apiPut<User>(`${API_PATHS.USERS}/${id}`, data),

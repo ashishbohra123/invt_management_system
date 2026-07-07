@@ -117,11 +117,4 @@ export const orderRepository = {
     return result.rows[0] ? mapRow(result.rows[0]) : null;
   },
 
-  async updateStatus(id: string, status: string): Promise<ReturnType<typeof mapRow> | null> {
-    const result = await pool.query(
-      `UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
-      [status, id],
-    );
-    return result.rows[0] ? mapRow(result.rows[0]) : null;
-  },
 };
