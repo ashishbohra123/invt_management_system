@@ -7,8 +7,6 @@ interface Product {
   createdAt: string; updatedAt: string;
 }
 
-const categories = ["All", "Electronics", "Furniture", "Food & Beverage", "Accessories"];
-
 const productEmojis: Record<string, string> = {
   Electronics: "\u{1F4F1}", Furniture: "\u{1F6CF}", "Food & Beverage": "\u{1F355}", Accessories: "\u{1F4CB}",
 };
@@ -21,6 +19,8 @@ export function ProductList() {
   const [category, setCategory] = useState("All");
   const [sort, setSort] = useState("latest");
   const abortRef = useRef<AbortController | null>(null);
+
+  const categories = ["All", ...new Set(items.map((p) => p.category).filter(Boolean))];
 
   const filtered = items
     .filter((p) => !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase()))
@@ -57,7 +57,7 @@ export function ProductList() {
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111", margin: 0 }}>Products</h1>
-        <Button>
+        <Button onClick={() => alert("Product creation form coming soon.")}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
           </svg>

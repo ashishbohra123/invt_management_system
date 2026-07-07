@@ -18,9 +18,9 @@ export function App() {
             </Route>
             <Route element={<ProtectedRoute portalType="user" />}>
               <Route path="/" element={<UserLayout><h1 style={pageTitleStyle}>Dashboard</h1><p>Welcome to the user portal.</p></UserLayout>} />
-              <Route path="/products" element={<UserLayout><ProductList /></UserLayout>} />
+              <Route path="/products" element={<UserLayout sidebar><ProductList /></UserLayout>} />
               <Route path="/inventory" element={<UserLayout sidebar><InventoryList /></UserLayout>} />
-              <Route path="/orders" element={<UserLayout><OrderList /></UserLayout>} />
+              <Route path="/orders" element={<UserLayout sidebar><OrderList /></UserLayout>} />
             </Route>
           </Routes>
         </BrowserRouter>

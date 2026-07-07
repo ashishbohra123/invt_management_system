@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Button, Card, CardContent, Badge, ordersService } from "@moc/shared";
+import { Button, Card, CardContent, Badge, Modal, Input, ordersService } from "@moc/shared";
 
 interface Order {
   id: string; productId: string; productName: string; productSku: string;
@@ -29,6 +29,10 @@ export function OrderList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newProductId, setNewProductId] = useState("");
+  const [newQty, setNewQty] = useState("1");
+  const [createSaving, setCreateSaving] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   const fetchItems = useCallback(async () => {
@@ -50,6 +54,22 @@ export function OrderList() {
   useEffect(() => { fetchItems(); }, [fetchItems]);
   useEffect(() => () => { if (abortRef.current) abortRef.current.abort(); }, []);
 
+  const handleCreate = async () => {
+    if (!newProductId.trim()) { setError("Product ID is required"); return; }
+    const qty = parseInt(newQty, 10);
+    if (isNaN(qty) || qty < 1) { setError("Valid quantity required"); return; }
+    setCreateSaving(true);
+    try {
+      await ordersService.create({ productId: newProductId.trim(), quantity: qty });
+      setCreateOpen(false);
+      setNewProductId("");
+      setNewQty("1");
+      fetchItems();
+    } catch {
+      setError("Failed to create order");
+    } finally { setCreateSaving(false); }
+  };
+
   const countByStatus = (status: string) => status === "" ? items.length : items.filter((o) => o.status === status).length;
 
   if (loading) return <p style={{ color: "#6B7280" }}>Loading...</p>;
@@ -59,7 +79,7 @@ export function OrderList() {
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111", margin: 0 }}>Orders</h1>
-        <Button>
+        <Button onClick={() => setCreateOpen(true)}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
           </svg>
@@ -113,6 +133,27 @@ export function OrderList() {
           </Card>
         ))}
       </div>
+
+      <Modal
+        open={createOpen}
+        title="New Order"
+        onClose={() => { setCreateOpen(false); setNewProductId(""); setNewQty("1"); }}
+        footer={
+          <div style={{ display: "flex", gap: 8 }}>
+            <Button variant="secondary" onClick={() => { setCreateOpen(false); setNewProductId(""); setNewQty("1"); }}>Cancel</Button>
+            <Button disabled={createSaving} onClick={handleCreate}>{createSaving ? "Creating..." : "Create Order"}</Button>
+          </div>
+        }
+      >
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ display: "block", marginBottom: 6, fontWeight: 500, fontSize: 14, color: "#374151" }}>Product ID</label>
+          <Input value={newProductId} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewProductId(e.target.value)} placeholder="Enter product ID" />
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ display: "block", marginBottom: 6, fontWeight: 500, fontSize: 14, color: "#374151" }}>Quantity</label>
+          <Input type="number" min={1} value={newQty} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewQty(e.target.value)} />
+        </div>
+      </Modal>
     </div>
   );
 }

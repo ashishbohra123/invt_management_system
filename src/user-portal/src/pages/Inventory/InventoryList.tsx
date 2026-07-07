@@ -28,6 +28,10 @@ export function InventoryList() {
   const [updating, setUpdating] = useState<InventoryItem | null>(null);
   const [updateQty, setUpdateQty] = useState("");
   const [updateSaving, setUpdateSaving] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createProductId, setCreateProductId] = useState("");
+  const [createQty, setCreateQty] = useState("0");
+  const [createSaving, setCreateSaving] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   const fetchItems = useCallback(async () => {
@@ -55,6 +59,22 @@ export function InventoryList() {
   const lowStockCount = items.filter((i) => i.currentInventory <= i.reorderThreshold && i.currentInventory > 0).length;
   const outOfStockCount = items.filter((i) => i.currentInventory === 0).length;
   const inStockCount = total - lowStockCount - outOfStockCount;
+
+  const handleCreate = async () => {
+    if (!createProductId.trim()) { setError("Product ID is required"); return; }
+    const qty = parseInt(createQty, 10);
+    if (isNaN(qty) || qty < 0) { setError("Valid quantity required"); return; }
+    setCreateSaving(true);
+    try {
+      await inventoryService.create({ productId: createProductId.trim(), currentInventory: qty });
+      setCreateOpen(false);
+      setCreateProductId("");
+      setCreateQty("0");
+      fetchItems();
+    } catch {
+      setError("Failed to create inventory item");
+    } finally { setCreateSaving(false); }
+  };
 
   const handleUpdate = async () => {
     if (!updating) return;
@@ -99,9 +119,17 @@ export function InventoryList() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111", margin: "0 0 24px" }}>
-        Inventory <span style={{ fontWeight: 400, color: "#6B7280" }}>Stock Tracking</span>
-      </h1>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111", margin: 0 }}>
+          Inventory <span style={{ fontWeight: 400, color: "#6B7280" }}>Stock Tracking</span>
+        </h1>
+        <Button onClick={() => setCreateOpen(true)}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Add Inventory Item
+        </Button>
+      </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
         <div style={kpiCardStyle}>
@@ -147,6 +175,27 @@ export function InventoryList() {
           </div>
         }
       />
+
+      <Modal
+        open={createOpen}
+        title="Add Inventory Item"
+        onClose={() => { setCreateOpen(false); setCreateProductId(""); setCreateQty("0"); }}
+        footer={
+          <div style={{ display: "flex", gap: 8 }}>
+            <Button variant="secondary" onClick={() => { setCreateOpen(false); setCreateProductId(""); setCreateQty("0"); }}>Cancel</Button>
+            <Button disabled={createSaving} onClick={handleCreate}>{createSaving ? "Creating..." : "Create"}</Button>
+          </div>
+        }
+      >
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "block", marginBottom: 6, fontWeight: 500, fontSize: 14, color: "#374151" }}>Product ID</label>
+          <Input value={createProductId} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCreateProductId(e.target.value)} placeholder="Enter product ID" />
+        </div>
+        <div style={{ marginBottom: 8 }}>
+          <label style={{ display: "block", marginBottom: 6, fontWeight: 500, fontSize: 14, color: "#374151" }}>Initial Quantity</label>
+          <Input type="number" min={0} value={createQty} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCreateQty(e.target.value)} />
+        </div>
+      </Modal>
 
       <Modal
         open={updating !== null}
