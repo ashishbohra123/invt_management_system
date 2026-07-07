@@ -65,9 +65,9 @@ export function ProductList() {
         sku: form.sku.trim(),
         name: form.name.trim(),
         category: form.category.trim() || undefined,
-        costPerUnit: parseFloat(form.costPerUnit) || 0,
-        reorderThreshold: parseInt(form.reorderThreshold) || 10,
-      });
+        cost_per_unit: parseFloat(form.costPerUnit) || 0,
+        reorder_threshold: parseInt(form.reorderThreshold) || 10,
+      } as any);
       setCreateOpen(false);
       setForm({ sku: "", name: "", category: "", costPerUnit: "", reorderThreshold: "10" });
       fetchItems();
