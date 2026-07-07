@@ -21,22 +21,41 @@ function mapRow(row: InventoryRow) {
 }
 
 export const inventoryRepository = {
-  async findAll(tenantId?: string): Promise<ReturnType<typeof mapRow>[]> {
-    let query = `SELECT inv.*, p.name as product_name, p.sku as product_sku
+  async findAll(tenantId?: string, search?: string, page?: number, pageSize?: number): Promise<{ data: ReturnType<typeof mapRow>[]; total: number }> {
+    let query = `SELECT inv.*, p.name as product_name, p.sku as product_sku, p.reorder_threshold as reorder_threshold
                  FROM inventory inv
                  JOIN products p ON p.id = inv.product_id`;
     const params: string[] = [];
+    const conditions: string[] = [];
     if (tenantId) {
-      query += ` WHERE inv.tenant_id = $1`;
+      conditions.push(`inv.tenant_id = $${params.length + 1}`);
       params.push(tenantId);
     }
+    if (search) {
+      conditions.push(`(p.name ILIKE $${params.length + 1} OR p.sku ILIKE $${params.length + 1})`);
+      params.push(`%${search}%`);
+    }
+    if (conditions.length > 0) query += ` WHERE ${conditions.join(" AND ")}`;
     query += ` ORDER BY p.name ASC`;
+
+    const countResult = await pool.query(`SELECT COUNT(*) as total FROM (${query}) sub`, params);
+    const total = parseInt(countResult.rows[0]?.total ?? "0", 10);
+
+    const p = page ?? 1;
+    const ps = pageSize ?? 10;
+    query += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(String(ps), String((p - 1) * ps));
+
     const result = await pool.query(query, params);
-    return result.rows.map((row: Record<string, unknown>) => ({
-      ...mapRow(row as unknown as InventoryRow),
-      productName: row.product_name as string,
-      productSku: row.product_sku as string,
-    }));
+    return {
+      data: result.rows.map((row: Record<string, unknown>) => ({
+        ...mapRow(row as unknown as InventoryRow),
+        productName: row.product_name as string,
+        productSku: row.product_sku as string,
+        reorderThreshold: row.reorder_threshold as number,
+      })),
+      total,
+    };
   },
 
   async findById(id: string): Promise<ReturnType<typeof mapRow> | null> {

@@ -2,8 +2,8 @@ import { inventoryRepository } from "../repositories/inventoryRepository.js";
 import { AppError } from "./AppError.js";
 
 export const inventoryService = {
-  async list(tenantId?: string) {
-    return inventoryRepository.findAll(tenantId);
+  async list(tenantId?: string, search?: string, page?: number, pageSize?: number) {
+    return inventoryRepository.findAll(tenantId, search, page, pageSize);
   },
 
   async updateStock(id: string, quantity: number) {

@@ -5,8 +5,19 @@ export const inventoryController = {
   async list(req: Request, res: Response) {
     try {
       const tenantId = req.query.tenant_id as string | undefined;
-      const records = await inventoryService.list(tenantId);
-      res.json(records);
+      const search = req.query.search as string | undefined;
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : undefined;
+      const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string, 10) : undefined;
+      const result = await inventoryService.list(tenantId, search, page, pageSize);
+      const p = page ?? 1;
+      const ps = pageSize ?? 10;
+      res.json({
+        data: result.data,
+        total: result.total,
+        page: p,
+        pageSize: ps,
+        totalPages: Math.ceil(result.total / ps),
+      });
     } catch (err) {
       nextError(err, res);
     }

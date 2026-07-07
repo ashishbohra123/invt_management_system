@@ -36,11 +36,17 @@ describe("Inventory API", () => {
 
   describe("GET /api/inventory", () => {
     it("returns a list of inventory records", async () => {
-      mockQuery.mockResolvedValue({ rows: [] });
+      const countRow = { total: "0" };
+      mockQuery
+        .mockResolvedValueOnce({ rows: [countRow] })
+        .mockResolvedValueOnce({ rows: [] });
       const res = await request(createApp()).get("/api/inventory").set(authHeader());
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(Array.isArray(res.body.data.data)).toBe(true);
+      expect(res.body.data.total).toBe(0);
+      expect(res.body.data.page).toBe(1);
+      expect(res.body.data.totalPages).toBe(0);
     });
 
     it("requires authentication", async () => {
