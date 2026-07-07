@@ -12,17 +12,16 @@ interface Order {
 const tabs = [
   { label: "All", value: "" },
   { label: "Pending", value: "created" },
-  { label: "Processing", value: "processing" },
-  { label: "Shipped", value: "approved" },
-  { label: "Delivered", value: "delivered" },
+  { label: "Approved", value: "approved" },
+  { label: "Cancelled", value: "cancelled" },
 ];
 
 const statusColors: Record<string, "info" | "success" | "warning" | "danger" | "default"> = {
-  processing: "info", approved: "success", created: "warning", cancelled: "danger", delivered: "success",
+  created: "warning", approved: "success", cancelled: "danger",
 };
 
 const statusLabels: Record<string, string> = {
-  processing: "Processing", approved: "Shipped", created: "Pending", cancelled: "Cancelled", delivered: "Delivered",
+  created: "Pending", approved: "Approved", cancelled: "Cancelled",
 };
 
 export function OrderList() {
