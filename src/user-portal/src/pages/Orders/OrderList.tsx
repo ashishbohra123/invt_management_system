@@ -52,6 +52,8 @@ function OrderStatusBadge({ status }: { status: string }) {
   );
 }
 
+interface ProductOption { id: string; name: string; sku: string; }
+
 export function OrderList() {
   const [items, setItems] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,6 +62,7 @@ export function OrderList() {
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [products, setProducts] = useState<ProductOption[]>([]);
   const [newOrder, setNewOrder] = useState({ productId: "", quantity: 1 });
   const [actionTarget, setActionTarget] = useState<Order | null>(null);
   const [actionType, setActionType] = useState<"approve" | "cancel" | null>(null);
@@ -96,7 +99,7 @@ export function OrderList() {
       const res = await fetch(API_PATH, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newOrder),
+        body: JSON.stringify({ product_id: newOrder.productId, quantity: newOrder.quantity }),
       });
       if (!res.ok) throw new Error("Failed to create order");
       setCreateOpen(false);
@@ -106,6 +109,18 @@ export function OrderList() {
     } catch (err) {
       toast(err instanceof Error ? err.message : "Create failed", "error");
     }
+  };
+
+  const openCreateModal = async () => {
+    setCreateOpen(true);
+    try {
+      const res = await fetch("/api/products");
+      if (res.ok) {
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : data?.data ?? [];
+        setProducts(list.map((p: { id: string; name: string; sku: string }) => ({ id: p.id, name: p.name, sku: p.sku })));
+      }
+    } catch { /* silently ignore product fetch failure */ }
   };
 
   const handleAction = async () => {
@@ -178,7 +193,7 @@ export function OrderList() {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#111111" }}>Orders</h1>
-        <Button onClick={() => setCreateOpen(true)}>+ New Order</Button>
+        <Button onClick={openCreateModal}>+ New Order</Button>
       </div>
 
       <div style={{
@@ -243,13 +258,22 @@ export function OrderList() {
       >
         <div style={{ marginBottom: 16 }}>
           <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500, color: "#374151" }}>
-            Product ID
+            Product
           </label>
-          <Input
+          <select
             value={newOrder.productId}
             onChange={(e) => setNewOrder(p => ({ ...p, productId: e.target.value }))}
-            placeholder="Enter product ID"
-          />
+            style={{
+              width: "100%", padding: "8px 12px", fontSize: 14, borderRadius: 6,
+              border: "1px solid #D1D5DB", background: "#fff", cursor: "pointer",
+              color: newOrder.productId ? "#111" : "#9CA3AF",
+            }}
+          >
+            <option value="" disabled>Select a product...</option>
+            {products.map((p) => (
+              <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>
+            ))}
+          </select>
         </div>
         <div style={{ marginBottom: 16 }}>
           <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500, color: "#374151" }}>
