@@ -6,6 +6,14 @@ export const inventoryService = {
     return inventoryRepository.findAll(tenantId, search, page, pageSize);
   },
 
+  async create(productId: string, tenantId: string, currentInventory?: number) {
+    const existing = await inventoryRepository.findByProductId(productId);
+    if (existing) {
+      throw new AppError("Inventory record already exists for this product", "VALIDATION_ERROR");
+    }
+    return inventoryRepository.create(productId, tenantId, currentInventory);
+  },
+
   async getById(id: string) {
     const record = await inventoryRepository.findByIdWithProduct(id);
     if (!record) {

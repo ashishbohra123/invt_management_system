@@ -2,6 +2,26 @@ import type { Request, Response } from "express";
 import { inventoryService, AppError } from "../services/index.js";
 
 export const inventoryController = {
+  async create(req: Request, res: Response) {
+    try {
+      const { product_id: productId } = req.body;
+      if (!productId) {
+        res.status(400).json({ success: false, error: "product_id is required" });
+        return;
+      }
+      const currentInventory = req.body.current_inventory ? parseInt(req.body.current_inventory, 10) : undefined;
+      const tenantId = req.body.tenant_id ?? req.user?.tenantId;
+      if (!tenantId) {
+        res.status(400).json({ success: false, error: "tenant_id is required" });
+        return;
+      }
+      const record = await inventoryService.create(productId, tenantId, currentInventory);
+      res.status(201).json(record);
+    } catch (err) {
+      nextError(err, res);
+    }
+  },
+
   async list(req: Request, res: Response) {
     try {
       const tenantId = req.query.tenant_id as string | undefined;

@@ -8,6 +8,34 @@ inventoryRouter.use(authenticate);
 /**
  * @openapi
  * /inventory:
+ *   post:
+ *     tags: [Inventory]
+ *     summary: Create an inventory record
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [product_id]
+ *             properties:
+ *               product_id:
+ *                 type: string
+ *               current_inventory:
+ *                 type: integer
+ *               tenant_id:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: The created inventory record
+ */
+inventoryRouter.post("/", inventoryController.create);
+
+/**
+ * @openapi
+ * /inventory:
  *   get:
  *     tags: [Inventory]
  *     summary: List inventory records

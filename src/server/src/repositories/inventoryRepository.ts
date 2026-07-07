@@ -86,12 +86,12 @@ export const inventoryRepository = {
     return result.rows[0] ? mapRow(result.rows[0]) : null;
   },
 
-  async create(productId: string, tenantId: string): Promise<ReturnType<typeof mapRow>> {
+  async create(productId: string, tenantId: string, currentInventory = 0): Promise<ReturnType<typeof mapRow>> {
     const result = await pool.query(
       `INSERT INTO inventory (product_id, tenant_id, current_inventory)
-       VALUES ($1, $2, 0)
+       VALUES ($1, $2, $3)
        RETURNING *`,
-      [productId, tenantId],
+      [productId, tenantId, currentInventory],
     );
     return mapRow(result.rows[0]);
   },

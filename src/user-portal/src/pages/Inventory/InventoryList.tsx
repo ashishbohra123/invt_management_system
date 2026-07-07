@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  DataTable, Badge, Button, Modal, Input, SearchBar, inventoryService, apiPut, API_PATHS,
+  DataTable, Badge, Button, Modal, Input, SearchBar, inventoryService, apiPost, apiPut, API_PATHS,
 } from "@moc/shared";
 import type { Column } from "@moc/shared";
 
@@ -25,6 +25,49 @@ function stockBarPercent(item: InventoryItem): number {
   return Math.min(100, Math.round((item.currentInventory / (item.reorderThreshold * 2)) * 100));
 }
 
+function AddInventoryModal({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: () => void }) {
+  const [form, setForm] = useState({ productId: "", currentInventory: "0" });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    if (!form.productId) { setError("Product ID is required"); return; }
+    setSaving(true); setError(null);
+    try {
+      await apiPost(API_PATHS.INVENTORY, {
+        product_id: form.productId,
+        current_inventory: parseInt(form.currentInventory, 10) || 0,
+      });
+      onCreated();
+      onClose();
+      setForm({ productId: "", currentInventory: "0" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <Modal open={open} title="Add Inventory Item" onClose={onClose}
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+        </>
+      }
+    >
+      {error && <p style={{ color: "#DC2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
+      <div style={{ marginBottom: 14 }}>
+        <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500, color: "#374151" }}>Product ID *</label>
+        <Input value={form.productId} onChange={(e) => setForm(p => ({ ...p, productId: e.target.value }))} placeholder="Product ID" />
+      </div>
+      <div style={{ marginBottom: 14 }}>
+        <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500, color: "#374151" }}>Initial Stock</label>
+        <Input type="number" min={0} value={form.currentInventory} onChange={(e) => setForm(p => ({ ...p, currentInventory: e.target.value }))} />
+      </div>
+    </Modal>
+  );
+}
+
 export function InventoryList() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +76,7 @@ export function InventoryList() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [addOpen, setAddOpen] = useState(false);
   const [updating, setUpdating] = useState<InventoryItem | null>(null);
   const [updateQty, setUpdateQty] = useState("");
   const [updateSaving, setUpdateSaving] = useState(false);
@@ -135,9 +179,12 @@ export function InventoryList() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111", margin: "0 0 24px" }}>
-        Inventory <span style={{ fontWeight: 400, color: "#6B7280" }}>Stock Tracking</span>
-      </h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111", margin: 0 }}>
+          Inventory <span style={{ fontWeight: 400, color: "#6B7280" }}>Stock Tracking</span>
+        </h1>
+        <Button onClick={() => setAddOpen(true)}>+ Add Inventory</Button>
+      </div>
 
       <div style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
         <div style={{
@@ -241,6 +288,8 @@ export function InventoryList() {
           />
         </div>
       </Modal>
+
+      <AddInventoryModal open={addOpen} onClose={() => setAddOpen(false)} onCreated={fetchItems} />
     </div>
   );
 }
