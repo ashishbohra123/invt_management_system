@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { DataTable, Badge, Button, Modal, Input, SearchBar, inventoryService } from "@moc/shared";
+import { DataTable, Badge, Button, Modal, Input, SearchBar, inventoryService, productsService } from "@moc/shared";
 import type { Column } from "@moc/shared";
+
+interface Product { id: string; sku: string; name: string; category: string; costPerUnit: number; reorderThreshold: number; }
 
 interface InventoryItem {
   id: string; productId: string; productName: string; productSku: string;
@@ -32,6 +34,7 @@ export function InventoryList() {
   const [createProductId, setCreateProductId] = useState("");
   const [createQty, setCreateQty] = useState("0");
   const [createSaving, setCreateSaving] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
   const fetchItems = useCallback(async () => {
@@ -54,6 +57,7 @@ export function InventoryList() {
   }, [page, search]);
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
+  useEffect(() => { productsService.list().then((res: any) => { const list = Array.isArray(res) ? res : res.data ?? []; setProducts(list); }).catch(() => {}); }, []);
   useEffect(() => () => { if (abortRef.current) abortRef.current.abort(); }, []);
 
   const lowStockCount = items.filter((i) => i.currentInventory <= i.reorderThreshold && i.currentInventory > 0).length;
@@ -188,8 +192,11 @@ export function InventoryList() {
         }
       >
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", marginBottom: 6, fontWeight: 500, fontSize: 14, color: "#374151" }}>Product ID</label>
-          <Input value={createProductId} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCreateProductId(e.target.value)} placeholder="Enter product ID" />
+          <label style={{ display: "block", marginBottom: 6, fontWeight: 500, fontSize: 14, color: "#374151" }}>Product</label>
+          <select value={createProductId} onChange={(e) => setCreateProductId(e.target.value)} style={selectStyle}>
+            <option value="">Select a product...</option>
+            {products.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>)}
+          </select>
         </div>
         <div style={{ marginBottom: 8 }}>
           <label style={{ display: "block", marginBottom: 6, fontWeight: 500, fontSize: 14, color: "#374151" }}>Initial Quantity</label>
@@ -227,4 +234,8 @@ export function InventoryList() {
 
 const kpiCardStyle: React.CSSProperties = {
   background: "#fff", border: "1px solid #E5E7EB", borderRadius: 8, padding: "16px 20px",
+};
+const selectStyle: React.CSSProperties = {
+  width: "100%", padding: "10px 14px", border: "1px solid #D1D5DB", borderRadius: 6,
+  fontSize: 14, background: "#fff", color: "#111", outline: "none", fontFamily: "inherit",
 };

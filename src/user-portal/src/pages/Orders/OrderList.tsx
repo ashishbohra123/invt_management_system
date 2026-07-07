@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Button, Card, CardContent, Badge, Modal, Input, ordersService } from "@moc/shared";
+import { Button, Card, CardContent, Badge, Modal, Input, ordersService, productsService } from "@moc/shared";
 
+interface Product { id: string; sku: string; name: string; }
 interface Order {
   id: string; productId: string; productName: string; productSku: string;
   quantity: number; status: string; tenantId: string;
@@ -33,6 +34,7 @@ export function OrderList() {
   const [newProductId, setNewProductId] = useState("");
   const [newQty, setNewQty] = useState("1");
   const [createSaving, setCreateSaving] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
   const fetchItems = useCallback(async () => {
@@ -52,6 +54,7 @@ export function OrderList() {
   }, [tab]);
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
+  useEffect(() => { productsService.list().then((res: any) => { const list = Array.isArray(res) ? res : res.data ?? []; setProducts(list); }).catch(() => {}); }, []);
   useEffect(() => () => { if (abortRef.current) abortRef.current.abort(); }, []);
 
   const handleCreate = async () => {
@@ -146,8 +149,11 @@ export function OrderList() {
         }
       >
         <div style={{ marginBottom: 12 }}>
-          <label style={{ display: "block", marginBottom: 6, fontWeight: 500, fontSize: 14, color: "#374151" }}>Product ID</label>
-          <Input value={newProductId} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewProductId(e.target.value)} placeholder="Enter product ID" />
+          <label style={{ display: "block", marginBottom: 6, fontWeight: 500, fontSize: 14, color: "#374151" }}>Product</label>
+          <select value={newProductId} onChange={(e) => setNewProductId(e.target.value)} style={selectStyle}>
+            <option value="">Select a product...</option>
+            {products.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>)}
+          </select>
         </div>
         <div style={{ marginBottom: 12 }}>
           <label style={{ display: "block", marginBottom: 6, fontWeight: 500, fontSize: 14, color: "#374151" }}>Quantity</label>
@@ -157,3 +163,8 @@ export function OrderList() {
     </div>
   );
 }
+
+const selectStyle: React.CSSProperties = {
+  width: "100%", padding: "10px 14px", border: "1px solid #D1D5DB", borderRadius: 6,
+  fontSize: 14, background: "#fff", color: "#111", outline: "none", fontFamily: "inherit",
+};
