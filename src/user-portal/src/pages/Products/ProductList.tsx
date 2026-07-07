@@ -1,12 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { DataTable } from "../../components/ui/DataTable";
-import { SearchBar } from "../../components/ui/SearchBar";
-import { Button } from "../../components/ui/Button";
-import { Badge } from "../../components/ui/Badge";
-import { Card, CardContent } from "../../components/ui/Card";
-import { Modal } from "../../components/ui/Modal";
-import { Input } from "../../components/ui/Input";
-import type { Column } from "../../components/ui/DataTable";
+import { DataTable, SearchBar, Button, Badge, Card, CardContent, Modal, Input } from "@moc/shared";
+import type { Column } from "@moc/shared";
 import { CATEGORIES } from "@moc/shared";
 
 interface Product {

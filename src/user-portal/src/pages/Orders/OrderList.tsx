@@ -1,11 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { DataTable } from "../../components/ui/DataTable";
-import { Button } from "../../components/ui/Button";
-import { Badge } from "../../components/ui/Badge";
-import { Modal } from "../../components/ui/Modal";
-import { Input } from "../../components/ui/Input";
+import { DataTable, Button, Badge, Modal, Input } from "@moc/shared";
 import { useToast } from "../../components/ui/Toast";
-import type { Column } from "../../components/ui/DataTable";
+import type { Column } from "@moc/shared";
 
 interface Order {
   id: string; productId: string; productName: string; productSku: string;
