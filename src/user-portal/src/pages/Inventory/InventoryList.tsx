@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  DataTable, Badge, Button, Modal, Input, SearchBar, inventoryService, apiPost, apiPut, API_PATHS,
+  DataTable, Badge, Button, Modal, Input, SearchBar, inventoryService, productsService, apiPost, apiPut, API_PATHS,
 } from "@moc/shared";
 import type { Column } from "@moc/shared";
 
@@ -26,12 +26,22 @@ function stockBarPercent(item: InventoryItem): number {
 }
 
 function AddInventoryModal({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: () => void }) {
+  const [products, setProducts] = useState<{ id: string; name: string; sku: string }[]>([]);
   const [form, setForm] = useState({ productId: "", currentInventory: "0" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!open) return;
+    setError(null);
+    productsService.list().then((res) => {
+      const list = res?.data ?? [];
+      setProducts(list);
+    }).catch(() => setError("Failed to load products"));
+  }, [open]);
+
   const handleSave = async () => {
-    if (!form.productId) { setError("Product ID is required"); return; }
+    if (!form.productId) { setError("Please select a product"); return; }
     setSaving(true); setError(null);
     try {
       await apiPost(API_PATHS.INVENTORY, {
@@ -46,6 +56,11 @@ function AddInventoryModal({ open, onClose, onCreated }: { open: boolean; onClos
     } finally { setSaving(false); }
   };
 
+  const selectStyle: React.CSSProperties = {
+    width: "100%", padding: "8px 12px", fontSize: 14, borderRadius: 6,
+    border: "1px solid #D1D5DB", background: "#fff", cursor: "pointer",
+  };
+
   return (
     <Modal open={open} title="Add Inventory Item" onClose={onClose}
       footer={
@@ -57,8 +72,13 @@ function AddInventoryModal({ open, onClose, onCreated }: { open: boolean; onClos
     >
       {error && <p style={{ color: "#DC2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
       <div style={{ marginBottom: 14 }}>
-        <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500, color: "#374151" }}>Product ID *</label>
-        <Input value={form.productId} onChange={(e) => setForm(p => ({ ...p, productId: e.target.value }))} placeholder="Product ID" />
+        <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500, color: "#374151" }}>Product *</label>
+        <select value={form.productId} onChange={(e) => setForm(p => ({ ...p, productId: e.target.value }))} style={selectStyle}>
+          <option value="">Select a product...</option>
+          {products.map((p) => (
+            <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>
+          ))}
+        </select>
       </div>
       <div style={{ marginBottom: 14 }}>
         <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500, color: "#374151" }}>Initial Stock</label>

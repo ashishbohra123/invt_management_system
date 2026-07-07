@@ -32,7 +32,6 @@ export const inventoryController = {
       const p = page ?? 1;
       const ps = pageSize ?? 10;
       res.json({
-        success: true,
         data: result.data,
         total: result.total,
         page: p,
