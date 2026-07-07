@@ -131,7 +131,7 @@ export function InventoryList() {
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111", margin: 0 }}>
-          Inventory <span style={{ fontWeight: 400, color: "#6B7280" }}>Stock Tracking</span>
+          Inventory
         </h1>
         <Button onClick={() => setCreateOpen(true)}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -141,22 +141,22 @@ export function InventoryList() {
         </Button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 24, marginBottom: 32 }}>
         <div style={kpiCardStyle}>
-          <div style={{ fontSize: 13, color: "#6B7280", marginBottom: 4 }}>Total Products</div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#111" }}>{total}</div>
+          <div style={kpiLabelStyle}>Total Products</div>
+          <div style={kpiValueStyle}>{total}</div>
         </div>
-        <div style={{ ...kpiCardStyle, borderLeft: "4px solid #22C55E" }}>
-          <div style={{ fontSize: 13, color: "#16A34A", marginBottom: 4 }}>In Stock</div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#16A34A" }}>{inStockCount}</div>
+        <div style={kpiCardStyle}>
+          <div style={kpiLabelStyle}>In Stock</div>
+          <div style={{ ...kpiValueStyle, color: "#22C55E" }}>{inStockCount}</div>
         </div>
-        <div style={{ ...kpiCardStyle, borderLeft: "4px solid #F59E0B" }}>
-          <div style={{ fontSize: 13, color: "#D97706", marginBottom: 4 }}>Low Stock</div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#D97706" }}>{lowStockCount}</div>
+        <div style={kpiCardStyle}>
+          <div style={kpiLabelStyle}>Low Stock</div>
+          <div style={{ ...kpiValueStyle, color: "#EAB308" }}>{lowStockCount}</div>
         </div>
-        <div style={{ ...kpiCardStyle, borderLeft: "4px solid #EF4444" }}>
-          <div style={{ fontSize: 13, color: "#DC2626", marginBottom: 4 }}>Out of Stock</div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#DC2626" }}>{outOfStockCount}</div>
+        <div style={kpiCardStyle}>
+          <div style={kpiLabelStyle}>Out of Stock</div>
+          <div style={{ ...kpiValueStyle, color: "#EF4444" }}>{outOfStockCount}</div>
         </div>
       </div>
 
@@ -241,7 +241,13 @@ export function InventoryList() {
 }
 
 const kpiCardStyle: React.CSSProperties = {
-  background: "#fff", border: "1px solid #E5E7EB", borderRadius: 8, padding: "16px 20px",
+  background: "#fff", border: "1px solid #E5E7EB", borderRadius: 8, padding: 24,
+};
+const kpiLabelStyle: React.CSSProperties = {
+  fontSize: 13, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8,
+};
+const kpiValueStyle: React.CSSProperties = {
+  fontSize: 32, fontWeight: 700, color: "#111",
 };
 const selectStyle: React.CSSProperties = {
   width: "100%", padding: "10px 14px", border: "1px solid #D1D5DB", borderRadius: 6,
