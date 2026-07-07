@@ -12,16 +12,16 @@ interface Order {
 const tabs = [
   { label: "All", value: "" },
   { label: "Created", value: "created" },
-  { label: "Confirmed", value: "approved" },
+  { label: "Confirmed", value: "confirmed" },
   { label: "Cancelled", value: "cancelled" },
 ];
 
 const statusColors: Record<string, "info" | "success" | "warning" | "danger" | "default"> = {
-  created: "info", approved: "success", cancelled: "danger",
+  created: "info", confirmed: "success", cancelled: "danger",
 };
 
 const statusLabels: Record<string, string> = {
-  created: "Created", approved: "Confirmed", cancelled: "Cancelled",
+  created: "Created", confirmed: "Confirmed", cancelled: "Cancelled",
 };
 
 export function OrderList() {
@@ -69,8 +69,8 @@ export function OrderList() {
       setNewProductId("");
       setNewQty("1");
       fetchItems();
-    } catch {
-      setError("Failed to create order");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create order");
     } finally { setCreateSaving(false); }
   };
 
@@ -85,8 +85,8 @@ export function OrderList() {
       setActionTarget(null);
       setActionType(null);
       fetchItems();
-    } catch {
-      setError(`Failed to ${actionType} order`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : `Failed to ${actionType} order`);
     }
   };
 

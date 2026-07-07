@@ -75,8 +75,8 @@ export function InventoryList() {
       setCreateProductId("");
       setCreateQty("0");
       fetchItems();
-    } catch {
-      setError("Failed to create inventory item");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create inventory item");
     } finally { setCreateSaving(false); }
   };
 
@@ -90,8 +90,8 @@ export function InventoryList() {
       setUpdating(null);
       setUpdateQty("");
       fetchItems();
-    } catch {
-      setError("Failed to update stock");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update stock");
     } finally { setUpdateSaving(false); }
   };
 

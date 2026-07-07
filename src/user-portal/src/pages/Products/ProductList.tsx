@@ -71,8 +71,8 @@ export function ProductList() {
       setCreateOpen(false);
       setForm({ sku: "", name: "", category: "", costPerUnit: "", reorderThreshold: "10" });
       fetchItems();
-    } catch {
-      setError("Failed to create product");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create product");
     } finally { setCreateSaving(false); }
   };
 
