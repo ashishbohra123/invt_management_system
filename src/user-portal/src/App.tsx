@@ -21,7 +21,7 @@ const brandStyle: React.CSSProperties = {
 function Layout({ children }: { children: ReactNode }) {
   const { isAuthenticated, user, logout } = useAuth();
   return (
-    <div style={{ minHeight: "100vh", background: "#fafafa" }}>
+    <div style={{ minHeight: "100vh", background: "#F8FAFC" }}>
       <nav style={navStyle}>
         <Link to="/" style={brandStyle}>User Portal</Link>
         {isAuthenticated && (
@@ -47,7 +47,7 @@ function Layout({ children }: { children: ReactNode }) {
           )}
         </div>
       </nav>
-      <main style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>{children}</main>
+      <main style={{ padding: 32, maxWidth: 1200, margin: "0 auto" }}>{children}</main>
     </div>
   );
 }
