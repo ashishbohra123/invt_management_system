@@ -7,6 +7,10 @@ interface Product {
   createdAt: string; updatedAt: string;
 }
 
+const categoryOptions = [
+  "Electronics", "Furniture", "Food & Beverage", "Accessories", "Clothing", "Sports", "Books", "Other",
+];
+
 const productEmojis: Record<string, string> = {
   Electronics: "\u{1F4F1}", Furniture: "\u{1F6CF}", "Food & Beverage": "\u{1F355}", Accessories: "\u{1F4CB}",
 };
@@ -154,7 +158,10 @@ export function ProductList() {
         </div>
         <div style={fieldStyle}>
           <label style={labelStyle}>Category</label>
-          <Input value={form.category} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, category: e.target.value }))} placeholder="Electronics, Furniture, etc." />
+          <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} style={selectStyle}>
+            <option value="">Select category...</option>
+            {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
         </div>
         <div style={fieldStyle}>
           <label style={labelStyle}>Cost per Unit ($)</label>

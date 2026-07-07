@@ -62,7 +62,7 @@ export function OrderList() {
     if (isNaN(qty) || qty < 1) { setError("Valid quantity required"); return; }
     setCreateSaving(true);
     try {
-      await ordersService.create({ productId: newProductId.trim(), quantity: qty });
+      await ordersService.create({ product_id: newProductId.trim(), quantity: qty } as any);
       setCreateOpen(false);
       setNewProductId("");
       setNewQty("1");

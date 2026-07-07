@@ -70,7 +70,7 @@ export function InventoryList() {
     if (isNaN(qty) || qty < 0) { setError("Valid quantity required"); return; }
     setCreateSaving(true);
     try {
-      await inventoryService.create({ productId: createProductId.trim(), currentInventory: qty });
+      await inventoryService.create({ product_id: createProductId.trim(), current_inventory: qty } as any);
       setCreateOpen(false);
       setCreateProductId("");
       setCreateQty("0");
@@ -86,7 +86,7 @@ export function InventoryList() {
     if (isNaN(qty) || qty < 0) return;
     setUpdateSaving(true);
     try {
-      await inventoryService.update(updating.id, { currentInventory: qty });
+      await inventoryService.update(updating.id, { current_inventory: qty } as any);
       setUpdating(null);
       setUpdateQty("");
       fetchItems();
