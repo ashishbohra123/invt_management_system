@@ -192,7 +192,7 @@ export function OrderList() {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#111111" }}>Orders</h1>
+        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, color: "#111" }}>Orders</h1>
         <Button onClick={openCreateModal}>+ New Order</Button>
       </div>
 
