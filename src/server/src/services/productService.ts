@@ -24,7 +24,7 @@ export const productService = {
       throw new AppError("Product name is required", "VALIDATION_ERROR");
     }
     if (!isValidSku(input.sku)) {
-      throw new AppError("Invalid SKU format (3-50 chars, alphanumeric and hyphens)", "VALIDATION_ERROR");
+      throw new AppError("Invalid SKU format - digits only (3+ characters)", "VALIDATION_ERROR");
     }
 
     const existing = await productRepository.findBySku(input.tenantId, input.sku);
