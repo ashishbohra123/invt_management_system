@@ -8,13 +8,14 @@ interface InputProps {
 }
 
 const baseStyle: React.CSSProperties = {
-  padding: 8,
-  borderRadius: 4,
-  border: "1px solid #ccc",
+  padding: "8px 12px",
+  borderRadius: 6,
+  border: "1px solid #D1D5DB",
   fontSize: 14,
   outline: "none",
   boxSizing: "border-box",
   width: "100%",
+  color: "#111111",
 };
 
 export function Input({ value, onChange, placeholder, type = "text", style, ...rest }: InputProps) {
@@ -25,8 +26,8 @@ export function Input({ value, onChange, placeholder, type = "text", style, ...r
       onChange={onChange}
       placeholder={placeholder}
       style={{ ...baseStyle, ...style }}
-      onFocus={(e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = "#388e3c"; }}
-      onBlur={(e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = "#ccc"; }}
+      onFocus={(e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = "#2563EB"; }}
+      onBlur={(e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = "#D1D5DB"; }}
       {...rest}
     />
   );

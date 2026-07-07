@@ -5,8 +5,11 @@ export const orderController = {
   async list(req: Request, res: Response) {
     try {
       const tenantId = req.query.tenant_id as string | undefined;
-      const orders = await orderService.list(tenantId);
-      res.json(orders);
+      const status = req.query.status as string | undefined;
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : undefined;
+      const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string, 10) : undefined;
+      const result = await orderService.list({ tenantId, status, page, pageSize });
+      res.json({ data: result.data, total: result.total, page: page ?? 1, pageSize: pageSize ?? 10, totalPages: result.totalPages });
     } catch (err) {
       nextError(err, res);
     }

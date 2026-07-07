@@ -13,10 +13,10 @@ interface ButtonProps {
 }
 
 const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
-  primary: { background: "#388e3c", color: "#fff", border: "none" },
+  primary: { background: "#2563EB", color: "#fff", border: "none" },
   secondary: { background: "#fff", color: "#333", border: "1px solid #ccc" },
   danger: { background: "#d32f2f", color: "#fff", border: "none" },
-  ghost: { background: "none", color: "#388e3c", border: "none", padding: "4px 8px" },
+  ghost: { background: "none", color: "#2563EB", border: "none", padding: "4px 8px" },
 };
 
 const sizeStyles: Record<ButtonSize, React.CSSProperties> = {
@@ -34,10 +34,10 @@ export function Button({
       disabled={disabled}
       onClick={onClick}
       style={{
-        borderRadius: 4,
+        borderRadius: 8,
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.6 : 1,
-        fontWeight: variant === "ghost" ? 500 : 600,
+        fontWeight: 500,
         ...variantStyles[variant],
         ...sizeStyles[size],
         ...style,

@@ -4,8 +4,8 @@ import { inventoryRepository } from "../repositories/inventoryRepository.js";
 import { AppError } from "./AppError.js";
 
 export const orderService = {
-  async list(tenantId?: string) {
-    return orderRepository.findAll(tenantId);
+  async list(params?: { tenantId?: string; status?: string; page?: number; pageSize?: number }) {
+    return orderRepository.findAll(params ?? {});
   },
 
   async getById(id: string) {

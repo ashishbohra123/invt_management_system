@@ -4,21 +4,22 @@ const wrapperStyle: React.CSSProperties = {
 };
 
 const inputStyle: React.CSSProperties = {
-  padding: "8px 12px 8px 32px",
-  borderRadius: 4,
-  border: "1px solid #ccc",
+  padding: "8px 12px 8px 36px",
+  borderRadius: 8,
+  border: "1px solid #D1D5DB",
   fontSize: 14,
   outline: "none",
   width: "100%",
   boxSizing: "border-box",
+  color: "#111111",
 };
 
 const iconStyle: React.CSSProperties = {
   position: "absolute",
-  left: 10,
+  left: 12,
   top: "50%",
   transform: "translateY(-50%)",
-  color: "#999",
+  color: "#9CA3AF",
   fontSize: 14,
   pointerEvents: "none",
 };
@@ -40,8 +41,8 @@ export function SearchBar({ value, onChange, placeholder = "Search...", style }:
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
         placeholder={placeholder}
         style={inputStyle}
-        onFocus={(e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = "#388e3c"; }}
-        onBlur={(e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = "#ccc"; }}
+        onFocus={(e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = "#2563EB"; }}
+        onBlur={(e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = "#D1D5DB"; }}
       />
     </div>
   );

@@ -39,22 +39,47 @@ function mapRow(row: OrderRow) {
 }
 
 export const orderRepository = {
-  async findAll(tenantId?: string): Promise<ReturnType<typeof mapRow>[]> {
-    let query = `SELECT o.*, p.name as product_name, p.sku as product_sku
-                 FROM orders o
-                 JOIN products p ON p.id = o.product_id`;
-    const params: string[] = [];
+  async findAll(params: { tenantId?: string; status?: string; page?: number; pageSize?: number } = {}): Promise<{ data: ReturnType<typeof mapRow>[]; total: number; totalPages: number }> {
+    const { tenantId, status, page = 1, pageSize = 10 } = params;
+    const conditions: string[] = [];
+    const queryParams: (string | number)[] = [];
+    let idx = 1;
+
     if (tenantId) {
-      query += ` WHERE o.tenant_id = $1`;
-      params.push(tenantId);
+      conditions.push(`o.tenant_id = $${idx++}`);
+      queryParams.push(tenantId);
     }
-    query += ` ORDER BY o.created_at DESC`;
-    const result = await pool.query(query, params);
-    return result.rows.map((row: Record<string, unknown>) => ({
+    if (status) {
+      conditions.push(`o.status = $${idx++}`);
+      queryParams.push(status);
+    }
+
+    const whereClause = conditions.length > 0 ? ` WHERE ${conditions.join(" AND ")}` : "";
+
+    const countResult = await pool.query(
+      `SELECT COUNT(*) FROM orders o${whereClause}`,
+      queryParams,
+    );
+    const total = parseInt(countResult.rows[0].count, 10);
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const offset = (page - 1) * pageSize;
+
+    const dataResult = await pool.query(
+      `SELECT o.*, p.name as product_name, p.sku as product_sku
+       FROM orders o
+       JOIN products p ON p.id = o.product_id${whereClause}
+       ORDER BY o.created_at DESC
+       LIMIT $${idx++} OFFSET $${idx++}`,
+      [...queryParams, pageSize, offset],
+    );
+
+    const data = dataResult.rows.map((row: Record<string, unknown>) => ({
       ...mapRow(row as unknown as OrderRow),
       productName: row.product_name as string,
       productSku: row.product_sku as string,
     }));
+
+    return { data, total, totalPages };
   },
 
   async findById(id: string): Promise<ReturnType<typeof mapRow> | null> {

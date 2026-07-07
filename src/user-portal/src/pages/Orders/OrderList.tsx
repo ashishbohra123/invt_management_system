@@ -15,9 +15,42 @@ interface Order {
 }
 
 const API_PATH = "/api/orders";
-const statusColors: Record<string, string> = {
-  created: "info", approved: "success", cancelled: "danger",
+const PAGE_SIZE = 10;
+
+const STATUS_CONFIG: Record<string, { label: string; variant: "info" | "success" | "danger" | "default" }> = {
+  created: { label: "Created", variant: "info" },
+  confirmed: { label: "Confirmed", variant: "success" },
+  cancelled: { label: "Cancelled", variant: "danger" },
 };
+
+const STATUS_OPTIONS = ["", "created", "confirmed", "cancelled"] as const;
+
+const statusBadgeColors: Record<string, React.CSSProperties> = {
+  created: { background: "#EFF6FF", color: "#2563EB" },
+  confirmed: { background: "#DCFCE7", color: "#16A34A" },
+  cancelled: { background: "#FEE2E2", color: "#DC2626" },
+};
+
+const tableHeaderBg = "#F9FAFB";
+const cardBorder = "#E5E7EB";
+const primaryColor = "#2563EB";
+
+function OrderStatusBadge({ status }: { status: string }) {
+  const colors = statusBadgeColors[status] ?? { background: "#F1F5F9", color: "#475569" };
+  return (
+    <span style={{
+      display: "inline-block",
+      padding: "2px 10px",
+      borderRadius: 9,
+      fontSize: 12,
+      fontWeight: 600,
+      lineHeight: "20px",
+      ...colors,
+    }}>
+      {STATUS_CONFIG[status]?.label ?? status}
+    </span>
+  );
+}
 
 export function OrderList() {
   const [items, setItems] = useState<Order[]>([]);
@@ -30,8 +63,8 @@ export function OrderList() {
   const [newOrder, setNewOrder] = useState({ productId: "", quantity: 1 });
   const [actionTarget, setActionTarget] = useState<Order | null>(null);
   const [actionType, setActionType] = useState<"approve" | "cancel" | null>(null);
+  const [detailTarget, setDetailTarget] = useState<Order | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const pageSize = 10;
   const { toast } = useToast();
 
   const fetchItems = useCallback(async () => {
@@ -40,27 +73,31 @@ export function OrderList() {
     abortRef.current = controller;
     setLoading(true); setError(null);
     try {
-      const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+      const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
       if (statusFilter) params.set("status", statusFilter);
       const res = await fetch(`${API_PATH}?${params}`, { signal: controller.signal });
       if (!res.ok) throw new Error("Failed to fetch orders");
-      const data = await res.json();
-      const inner = data.data ?? data;
-      const list = Array.isArray(inner) ? inner : Array.isArray(inner?.data) ? inner.data : [];
+      const json = await res.json();
+      const payload = json.data ?? json;
+      const list = Array.isArray(payload) ? payload : Array.isArray(payload.data) ? payload.data : [];
       setItems(list);
-      setTotalPages(inner?.totalPages ?? Math.max(1, Math.ceil((inner?.total ?? list.length) / pageSize)));
+      setTotalPages(payload.totalPages ?? Math.max(1, Math.ceil((payload.total ?? list.length) / PAGE_SIZE)));
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally { setLoading(false); }
-  }, [page, pageSize, statusFilter]);
+  }, [page, statusFilter]);
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
   useEffect(() => () => { if (abortRef.current) abortRef.current.abort(); }, []);
 
   const handleCreate = async () => {
     try {
-      const res = await fetch(API_PATH, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newOrder) });
+      const res = await fetch(API_PATH, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newOrder),
+      });
       if (!res.ok) throw new Error("Failed to create order");
       setCreateOpen(false);
       setNewOrder({ productId: "", quantity: 1 });
@@ -78,6 +115,7 @@ export function OrderList() {
       if (!res.ok) throw new Error(`Failed to ${actionType} order`);
       setActionTarget(null);
       setActionType(null);
+      setDetailTarget(null);
       toast(`Order ${actionType}d successfully`, "success");
       fetchItems();
     } catch (err) {
@@ -91,64 +129,105 @@ export function OrderList() {
     { key: "quantity", header: "Qty" },
     {
       key: "status", header: "Status",
-      render: (o) => (
-        <Badge variant={(statusColors[o.status] ?? "default") as "success" | "info" | "danger"}>
-          {o.status}
-        </Badge>
-      ),
+      render: (o) => <OrderStatusBadge status={o.status} />,
     },
     {
       key: "createdAt", header: "Created",
-      render: (o) => new Date(o.createdAt).toLocaleDateString(),
+      render: (o) => (
+        <span style={{ color: "#6B7280", fontSize: 13 }}>
+          {new Date(o.createdAt).toLocaleDateString()}
+        </span>
+      ),
     },
     {
       key: "actions", header: "Actions",
       render: (o) => (
-        <>
+        <span style={{ display: "flex", gap: 8 }}>
           {o.status === "created" && (
             <>
-              <Button variant="ghost" size="sm" onClick={() => { setActionTarget(o); setActionType("approve"); }}>Approve</Button>
-              <Button variant="ghost" size="sm" onClick={() => { setActionTarget(o); setActionType("cancel"); }} style={{ color: "#d32f2f" }}>Cancel</Button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setActionTarget(o); setActionType("approve"); }}
+                style={{
+                  padding: "4px 12px", borderRadius: 6, border: `1px solid ${primaryColor}`,
+                  background: "#fff", color: primaryColor, cursor: "pointer", fontSize: 12, fontWeight: 500,
+                }}
+              >
+                Confirm
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setActionTarget(o); setActionType("cancel"); }}
+                style={{
+                  padding: "4px 12px", borderRadius: 6, border: "1px solid #DC2626",
+                  background: "#fff", color: "#DC2626", cursor: "pointer", fontSize: 12, fontWeight: 500,
+                }}
+              >
+                Cancel
+              </button>
             </>
           )}
-        </>
+        </span>
       ),
     },
   ];
 
+  const handleRowClick = (order: Order) => {
+    setDetailTarget(order);
+  };
+
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <h1 style={{ margin: 0 }}>Orders</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#111111" }}>Orders</h1>
         <Button onClick={() => setCreateOpen(true)}>+ New Order</Button>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
-        <label style={{ marginRight: 8, fontSize: 14 }}>Filter:</label>
-        <select
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          style={{ padding: 8, borderRadius: 4, border: "1px solid #ccc", fontSize: 14 }}
-        >
-          <option value="">All</option>
-          <option value="created">Created</option>
-          <option value="approved">Approved</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+      <div style={{
+        display: "flex", gap: 8, marginBottom: 20,
+        flexWrap: "wrap", alignItems: "center",
+      }}>
+        {STATUS_OPTIONS.map((s) => {
+          const isActive = statusFilter === s;
+          const label = s === "" ? "All" : STATUS_CONFIG[s]?.label ?? s;
+          return (
+            <button
+              key={s}
+              onClick={() => { setStatusFilter(s); setPage(1); }}
+              style={{
+                padding: "6px 16px", borderRadius: 8, border: isActive ? "none" : `1px solid ${cardBorder}`,
+                background: isActive ? primaryColor : "#fff",
+                color: isActive ? "#fff" : "#374151",
+                cursor: "pointer", fontSize: 13, fontWeight: isActive ? 600 : 500,
+                transition: "all 0.15s",
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
-      <DataTable<Order>
-        columns={columns}
-        data={items}
-        loading={loading}
-        error={error}
-        keyExtractor={(o) => o.id}
-      />
+      <div style={{
+        borderRadius: 12, border: `1px solid ${cardBorder}`,
+        overflow: "hidden", background: "#fff",
+      }}>
+        <DataTable<Order>
+          columns={columns}
+          data={items}
+          loading={loading}
+          error={error}
+          keyExtractor={(o) => o.id}
+          onRowClick={handleRowClick}
+        />
+      </div>
 
-      <div style={{ marginTop: 16, display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}>
-        <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Previous</Button>
-        <span style={{ fontSize: 14 }}>Page {page} of {totalPages}</span>
-        <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Next</Button>
+      <div style={{ marginTop: 16, display: "flex", justifyContent: "center", alignItems: "center", gap: 12 }}>
+        <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+          Previous
+        </Button>
+        <span style={{ fontSize: 14, color: "#6B7280" }}>Page {page} of {totalPages}</span>
+        <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+          Next
+        </Button>
       </div>
 
       <Modal
@@ -162,33 +241,168 @@ export function OrderList() {
           </>
         }
       >
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ display: "block", marginBottom: 4, fontSize: 14, fontWeight: 500 }}>Product ID</label>
-          <Input value={newOrder.productId} onChange={(e) => setNewOrder(p => ({ ...p, productId: e.target.value }))} placeholder="Enter product ID" />
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500, color: "#374151" }}>
+            Product ID
+          </label>
+          <Input
+            value={newOrder.productId}
+            onChange={(e) => setNewOrder(p => ({ ...p, productId: e.target.value }))}
+            placeholder="Enter product ID"
+          />
         </div>
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ display: "block", marginBottom: 4, fontSize: 14, fontWeight: 500 }}>Quantity</label>
-          <Input type="number" value={String(newOrder.quantity)} onChange={(e) => setNewOrder(p => ({ ...p, quantity: parseInt(e.target.value) || 1 }))} />
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500, color: "#374151" }}>
+            Quantity
+          </label>
+          <Input
+            type="number"
+            value={String(newOrder.quantity)}
+            onChange={(e) => setNewOrder(p => ({ ...p, quantity: parseInt(e.target.value) || 1 }))}
+          />
         </div>
       </Modal>
 
       <Modal
-        open={actionTarget !== null}
+        open={actionTarget !== null && actionType !== null}
         title={actionType === "approve" ? "Approve Order" : "Cancel Order"}
         onClose={() => { setActionTarget(null); setActionType(null); }}
         footer={
           <>
-            <Button variant="secondary" onClick={() => { setActionTarget(null); setActionType(null); }}>Back</Button>
-            <Button variant={actionType === "cancel" ? "danger" : "primary"} onClick={handleAction}>
+            <Button variant="secondary" onClick={() => { setActionTarget(null); setActionType(null); }}>
+              Back
+            </Button>
+            <Button
+              onClick={handleAction}
+            >
               {actionType === "approve" ? "Approve" : "Cancel"}
             </Button>
           </>
         }
       >
-        <p style={{ margin: 0, fontSize: 14, color: "#555", lineHeight: 1.5 }}>
+        <p style={{ margin: 0, fontSize: 14, color: "#6B7280", lineHeight: 1.6 }}>
           Are you sure you want to {actionType} this order?
+          {actionTarget && (
+            <span style={{ display: "block", marginTop: 8, fontSize: 13, color: "#374151" }}>
+              Product: {actionTarget.productName} &middot; SKU: {actionTarget.productSku} &middot; Qty: {actionTarget.quantity}
+            </span>
+          )}
         </p>
       </Modal>
+
+      {detailTarget && (
+        <>
+          <div
+            style={{
+              position: "fixed", inset: 0, background: "rgba(0,0,0,0.2)",
+              zIndex: 1000,
+            }}
+            onClick={() => setDetailTarget(null)}
+          />
+          <div style={{
+            position: "fixed", top: 0, right: 0, bottom: 0,
+            width: 480, maxWidth: "100vw",
+            background: "#fff", zIndex: 1001,
+            boxShadow: "-4px 0 24px rgba(0,0,0,0.1)",
+            display: "flex", flexDirection: "column",
+            overflow: "hidden",
+          }}>
+            <div style={{
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+              padding: "20px 24px", borderBottom: `1px solid ${cardBorder}`,
+            }}>
+              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#111111" }}>
+                Order Details
+              </h2>
+              <button
+                onClick={() => setDetailTarget(null)}
+                style={{
+                  background: "none", border: "none", cursor: "pointer",
+                  fontSize: 20, color: "#6B7280", padding: 4, lineHeight: 1,
+                }}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div style={{ padding: 24, overflow: "auto", flex: 1 }}>
+              <div style={{ marginBottom: 24 }}>
+                <OrderStatusBadge status={detailTarget.status} />
+              </div>
+
+              <div style={{ display: "grid", gap: 20 }}>
+                <DetailRow label="Product" value={detailTarget.productName} />
+                <DetailRow label="SKU" value={detailTarget.productSku} />
+                <DetailRow label="Quantity" value={String(detailTarget.quantity)} />
+                <DetailRow label="Order ID" value={detailTarget.id} />
+                <DetailRow label="Status" value={STATUS_CONFIG[detailTarget.status]?.label ?? detailTarget.status} />
+                <DetailRow
+                  label="Created"
+                  value={new Date(detailTarget.createdAt).toLocaleString()}
+                />
+                <DetailRow
+                  label="Last Updated"
+                  value={new Date(detailTarget.updatedAt).toLocaleString()}
+                />
+                <DetailRow label="Created By" value={detailTarget.createdBy} />
+                {detailTarget.approvedBy && (
+                  <DetailRow label="Approved By" value={detailTarget.approvedBy} />
+                )}
+                {detailTarget.cancelledBy && (
+                  <DetailRow label="Cancelled By" value={detailTarget.cancelledBy} />
+                )}
+              </div>
+            </div>
+
+            {detailTarget.status === "created" && (
+              <div style={{
+                padding: "16px 24px", borderTop: `1px solid ${cardBorder}`,
+                display: "flex", gap: 12, justifyContent: "flex-end",
+              }}>
+                <button
+                  onClick={() => {
+                    setActionTarget(detailTarget);
+                    setActionType("cancel");
+                  }}
+                  style={{
+                    padding: "8px 20px", borderRadius: 8, border: `1px solid #DC2626`,
+                    background: "#fff", color: "#DC2626", cursor: "pointer",
+                    fontSize: 14, fontWeight: 500,
+                  }}
+                >
+                  Cancel Order
+                </button>
+                <button
+                  onClick={() => {
+                    setActionTarget(detailTarget);
+                    setActionType("approve");
+                  }}
+                  style={{
+                    padding: "8px 20px", borderRadius: 8, border: "none",
+                    background: primaryColor, color: "#fff", cursor: "pointer",
+                    fontSize: 14, fontWeight: 500,
+                  }}
+                >
+                  Approve Order
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <span style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#6B7280", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        {label}
+      </span>
+      <span style={{ fontSize: 14, color: "#111111", fontWeight: 500 }}>
+        {value}
+      </span>
     </div>
   );
 }

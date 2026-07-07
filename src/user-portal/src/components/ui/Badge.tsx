@@ -9,11 +9,11 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, React.CSSProperties> = {
-  default: { background: "#e0e0e0", color: "#333" },
-  success: { background: "#e8f5e9", color: "#2e7d32" },
-  warning: { background: "#fff3e0", color: "#e65100" },
-  danger: { background: "#ffebee", color: "#c62828" },
-  info: { background: "#e3f2fd", color: "#1565c0" },
+  default: { background: "#F1F5F9", color: "#475569" },
+  success: { background: "#DCFCE7", color: "#16A34A" },
+  warning: { background: "#FEF3C7", color: "#D97706" },
+  danger: { background: "#FEE2E2", color: "#DC2626" },
+  info: { background: "#EFF6FF", color: "#2563EB" },
 };
 
 export function Badge({ children, variant = "default", style }: BadgeProps) {
@@ -21,8 +21,8 @@ export function Badge({ children, variant = "default", style }: BadgeProps) {
     <span
       style={{
         display: "inline-block",
-        padding: "2px 8px",
-        borderRadius: 4,
+        padding: "2px 10px",
+        borderRadius: 9,
         fontSize: 12,
         fontWeight: 600,
         lineHeight: "20px",
