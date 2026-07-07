@@ -4,6 +4,8 @@ import { SearchBar } from "../../components/ui/SearchBar";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import { Card, CardContent } from "../../components/ui/Card";
+import { Modal } from "../../components/ui/Modal";
+import { Input } from "../../components/ui/Input";
 import type { Column } from "../../components/ui/DataTable";
 import { CATEGORIES } from "@moc/shared";
 
@@ -42,6 +44,80 @@ const toggleBtn = (active: boolean): React.CSSProperties => ({
   color: active ? "#fff" : "#374151", borderRadius: 4,
 });
 
+function AddProductModal({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: () => void }) {
+  const [form, setForm] = useState({ name: "", sku: "", category: "", costPerUnit: "", reorderThreshold: "10" });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    if (!form.name || !form.sku) { setError("Name and SKU are required"); return; }
+    setSaving(true); setError(null);
+    try {
+      const res = await fetch(API_PATH, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name, sku: form.sku,
+          category: form.category || undefined,
+          cost_per_unit: form.costPerUnit ? parseFloat(form.costPerUnit) : undefined,
+          reorder_threshold: parseInt(form.reorderThreshold, 10),
+        }),
+      });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to create product"); }
+      onCreated();
+      onClose();
+      setForm({ name: "", sku: "", category: "", costPerUnit: "", reorderThreshold: "10" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <Modal open={open} title="Add Product" onClose={onClose}
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+        </>
+      }
+    >
+      {error && <p style={{ color: "#DC2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
+      <div style={{ marginBottom: 14 }}>
+        <label style={labelStyle}>Name *</label>
+        <Input value={form.name} onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Product name" />
+      </div>
+      <div style={{ marginBottom: 14 }}>
+        <label style={labelStyle}>SKU *</label>
+        <Input value={form.sku} onChange={(e) => setForm(p => ({ ...p, sku: e.target.value }))} placeholder="e.g. PROD-001" />
+      </div>
+      <div style={{ marginBottom: 14 }}>
+        <label style={labelStyle}>Category</label>
+        <select value={form.category} onChange={(e) => setForm(p => ({ ...p, category: e.target.value }))}
+          style={{
+            width: "100%", padding: "8px 12px", fontSize: 14, borderRadius: 6,
+            border: "1px solid #D1D5DB", background: "#fff", cursor: "pointer",
+          }}
+        >
+          <option value="">Select...</option>
+          {categoryOptions.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
+        </select>
+      </div>
+      <div style={{ marginBottom: 14 }}>
+        <label style={labelStyle}>Cost per Unit</label>
+        <Input type="number" value={form.costPerUnit} onChange={(e) => setForm(p => ({ ...p, costPerUnit: e.target.value }))} placeholder="0.00" />
+      </div>
+      <div style={{ marginBottom: 14 }}>
+        <label style={labelStyle}>Reorder Threshold</label>
+        <Input type="number" value={form.reorderThreshold} onChange={(e) => setForm(p => ({ ...p, reorderThreshold: e.target.value }))} />
+      </div>
+    </Modal>
+  );
+}
+
+const labelStyle: React.CSSProperties = {
+  display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500, color: "#374151",
+};
+
 export function ProductList() {
   const [items, setItems] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +127,7 @@ export function ProductList() {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [addOpen, setAddOpen] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const pageSize = 10;
 
@@ -110,15 +187,18 @@ export function ProductList() {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, color: "#111" }}>Products</h1>
         <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={() => setViewMode("list")} style={toggleBtn(viewMode === "list")}>List</button>
-          <button onClick={() => setViewMode("grid")} style={toggleBtn(viewMode === "grid")}>Grid</button>
+          <Button onClick={() => setAddOpen(true)}>+ Add Product</Button>
         </div>
       </div>
 
       <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          <button onClick={() => setViewMode("list")} style={toggleBtn(viewMode === "list")}>List</button>
+          <button onClick={() => setViewMode("grid")} style={toggleBtn(viewMode === "grid")}>Grid</button>
+        </div>
         <SearchBar value={search} onChange={handleSearch} placeholder="Search by name, SKU, or category..." />
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           <span style={inlineLabel}>Category:</span>
@@ -196,6 +276,8 @@ export function ProductList() {
           <Button variant="secondary" size="sm" disabled={page >= totalFilteredPages} onClick={() => setPage(p => p + 1)}>Next</Button>
         </div>
       )}
+
+      <AddProductModal open={addOpen} onClose={() => setAddOpen(false)} onCreated={fetchItems} />
     </div>
   );
 }
