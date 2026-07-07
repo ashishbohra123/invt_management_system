@@ -156,7 +156,7 @@ export function UserList() {
             <span style={{ fontSize: 14, color: "#6B7280" }}>
               Showing {total > 0 ? from : 0} to {to} of {total} entries
             </span>
-            <div style={{ display: "flex", gap: 4 }}>
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}>
               <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} style={pageBtnStyle}>Previous</button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                 <button

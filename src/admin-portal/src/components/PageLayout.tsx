@@ -48,7 +48,7 @@ const mainStyle: React.CSSProperties = {
 };
 const topBarStyle: React.CSSProperties = {
   display: "flex", alignItems: "center", justifyContent: "space-between",
-  marginBottom: 32,
+  marginBottom: 32, flexWrap: "wrap", gap: 12,
 };
 const userInfoStyle: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 12,

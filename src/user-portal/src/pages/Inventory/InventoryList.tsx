@@ -141,7 +141,7 @@ export function InventoryList() {
         </Button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 24, marginBottom: 32 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 24, marginBottom: 32 }}>
         <div style={kpiCardStyle}>
           <div style={kpiLabelStyle}>Total Products</div>
           <div style={kpiValueStyle}>{total}</div>
@@ -172,7 +172,7 @@ export function InventoryList() {
         footer={
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 16, borderTop: "1px solid #F3F4F6" }}>
             <span style={{ fontSize: 14, color: "#6B7280" }}>Showing {total > 0 ? from : 0} to {to} of {total} entries</span>
-            <div style={{ display: "flex", gap: 4 }}>
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}>
               <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
               {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                 const start = Math.max(1, Math.min(page - 2, totalPages - 4));

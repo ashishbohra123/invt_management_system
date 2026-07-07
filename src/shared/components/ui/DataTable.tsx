@@ -19,7 +19,7 @@ interface DataTableProps<T> {
 
 const tableWrap: React.CSSProperties = {
   background: "#fff", border: "1px solid #E5E7EB",
-  borderRadius: 8, overflow: "hidden",
+  borderRadius: 8, overflowX: "auto",
 };
 const thStyle: React.CSSProperties = {
   padding: "14px 16px", fontWeight: 600,
@@ -27,7 +27,6 @@ const thStyle: React.CSSProperties = {
   textAlign: "left", fontSize: 11,
   color: "#374151", background: "#F9FAFB",
   textTransform: "uppercase", letterSpacing: "0.05em",
-  whiteSpace: "nowrap",
 };
 const tdStyle: React.CSSProperties = {
   padding: "14px 16px", fontSize: 14,

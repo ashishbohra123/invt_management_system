@@ -52,9 +52,9 @@ export function LoginPage({ portalTitle = "Portal", registerPath = "/register", 
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", width: "100%" }}>
+    <div style={{ display: "flex", minHeight: "100vh", width: "100%", flexWrap: "wrap" }}>
       <div style={{
-        width: "50%", minWidth: 500, background: "#1e293b", color: "#fff",
+        flex: "1 1 50%", minWidth: 320, background: "#1e293b", color: "#fff",
         display: "flex", flexDirection: "column", justifyContent: "center",
         padding: "0 64px", boxSizing: "border-box",
       }}>
@@ -81,7 +81,7 @@ export function LoginPage({ portalTitle = "Portal", registerPath = "/register", 
         flex: 1, background: "#fff", display: "flex",
         alignItems: "center", justifyContent: "center",
       }}>
-        <div style={{ width: 380, marginTop: -40 }}>
+        <div style={{ width: "100%", maxWidth: 380, marginTop: -40, padding: "0 16px", boxSizing: "border-box" }}>
           <p style={{ fontSize: 24, fontWeight: 700, color: "#2563eb", margin: "0 0 35px 0" }}>
             {portalTitle}
           </p>

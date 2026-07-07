@@ -16,7 +16,7 @@ const modalStyle: React.CSSProperties = {
   position: "fixed", top: "50%", left: "50%",
   transform: "translate(-50%,-50%)",
   background: "#fff", borderRadius: 8, padding: 0,
-  minWidth: 400, maxWidth: "90vw", width: "100%",
+  minWidth: undefined, maxWidth: "min(500px, 90vw)", width: "100%",
   zIndex: 1000, boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
   maxHeight: "85vh", overflowY: "auto",
 };
