@@ -78,7 +78,8 @@ export function ProductList() {
 
   const selectStyle: React.CSSProperties = {
     padding: "10px 14px", border: "1px solid #D1D5DB", borderRadius: 6,
-    fontSize: 14, background: "#fff", color: "#374151", outline: "none", fontFamily: "inherit",
+    fontSize: 14, background: "#fff", color: "#374151", outline: "none",
+    fontFamily: "inherit", boxSizing: "border-box", cursor: "pointer",
   };
   const labelStyle: React.CSSProperties = {
     display: "block", marginBottom: 6, fontWeight: 500, fontSize: 14, color: "#374151",
@@ -158,7 +159,9 @@ export function ProductList() {
         </div>
         <div style={fieldStyle}>
           <label style={labelStyle}>Category</label>
-          <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} style={selectStyle}>
+          <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} style={selectStyle}
+            onFocus={(e) => { e.target.style.borderColor = "#2563EB"; e.target.style.boxShadow = "0 0 0 3px rgba(37,99,235,0.1)"; }}
+            onBlur={(e) => { e.target.style.borderColor = "#D1D5DB"; e.target.style.boxShadow = "none"; }}>
             <option value="">Select category...</option>
             {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
