@@ -34,6 +34,8 @@ export function OrderList() {
   const [newQty, setNewQty] = useState("1");
   const [createSaving, setCreateSaving] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const [actionTarget, setActionTarget] = useState<Order | null>(null);
+  const [actionType, setActionType] = useState<"approve" | "cancel" | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const fetchItems = useCallback(async () => {
@@ -70,6 +72,22 @@ export function OrderList() {
     } catch {
       setError("Failed to create order");
     } finally { setCreateSaving(false); }
+  };
+
+  const handleAction = async () => {
+    if (!actionTarget || !actionType) return;
+    try {
+      if (actionType === "approve") {
+        await ordersService.approve(actionTarget.id);
+      } else {
+        await ordersService.cancel(actionTarget.id);
+      }
+      setActionTarget(null);
+      setActionType(null);
+      fetchItems();
+    } catch {
+      setError(`Failed to ${actionType} order`);
+    }
   };
 
   const countByStatus = (status: string) => status === "" ? items.length : items.filter((o) => o.status === status).length;
@@ -126,9 +144,21 @@ export function OrderList() {
                   {order.productName} x{order.quantity}
                 </div>
               </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 12, color: "#9CA3AF" }}>
-                  {new Date(order.createdAt).toLocaleDateString()}
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {order.status === "created" && (
+                  <>
+                    <Button variant="secondary" size="sm" onClick={() => { setActionTarget(order); setActionType("approve"); }}>
+                      Approve
+                    </Button>
+                    <Button variant="secondary" size="sm" style={{ color: "#DC2626", borderColor: "#FECACA" }} onClick={() => { setActionTarget(order); setActionType("cancel"); }}>
+                      Cancel
+                    </Button>
+                  </>
+                )}
+                <div style={{ textAlign: "right", marginLeft: 8 }}>
+                  <div style={{ fontSize: 12, color: "#9CA3AF" }}>
+                    {new Date(order.createdAt).toLocaleDateString()}
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -158,6 +188,24 @@ export function OrderList() {
           <label style={{ display: "block", marginBottom: 6, fontWeight: 500, fontSize: 14, color: "#374151" }}>Quantity</label>
           <Input type="number" min={1} value={newQty} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewQty(e.target.value)} />
         </div>
+      </Modal>
+
+      <Modal
+        open={actionTarget !== null}
+        title={actionType === "approve" ? "Approve Order" : "Cancel Order"}
+        onClose={() => { setActionTarget(null); setActionType(null); }}
+        footer={
+          <div style={{ display: "flex", gap: 8 }}>
+            <Button variant="secondary" onClick={() => { setActionTarget(null); setActionType(null); }}>Back</Button>
+            <Button variant={actionType === "cancel" ? "danger" : "primary"} onClick={handleAction}>
+              {actionType === "approve" ? "Approve" : "Cancel"}
+            </Button>
+          </div>
+        }
+      >
+        <p style={{ margin: 0, fontSize: 14, color: "#6B7280", lineHeight: 1.5 }}>
+          Are you sure you want to {actionType} order {actionTarget?.id}?
+        </p>
       </Modal>
     </div>
   );
