@@ -1,56 +1,9 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
-import { AuthProvider, ProtectedRoute, LoginPage, RegisterPage, PortalSelectionPage, useAuth } from "@moc/shared";
-import { ToastProvider } from "./components/ui/Toast";
-import { ProductList } from "./pages/Products/index";
-import { InventoryList } from "./pages/Inventory/index";
-import { OrderList } from "./pages/Orders/index";
-import type { ReactNode } from "react";
-
-const navStyle: React.CSSProperties = {
-  background: "#388e3c", padding: "12px 24px",
-  display: "flex", gap: 24, alignItems: "center",
-  flexWrap: "wrap",
-};
-const linkStyle: React.CSSProperties = {
-  color: "#fff", textDecoration: "none", fontSize: 14,
-};
-const brandStyle: React.CSSProperties = {
-  color: "#fff", textDecoration: "none", fontWeight: 700, fontSize: 18, marginRight: 16,
-};
-
-function Layout({ children }: { children: ReactNode }) {
-  const { isAuthenticated, user, logout } = useAuth();
-  return (
-    <div style={{ minHeight: "100vh", background: "#F8FAFC" }}>
-      <nav style={navStyle}>
-        <Link to="/" style={brandStyle}>User Portal</Link>
-        {isAuthenticated && (
-          <>
-            <Link to="/products" style={linkStyle}>Products</Link>
-            <Link to="/inventory" style={linkStyle}>Inventory</Link>
-            <Link to="/orders" style={linkStyle}>Orders</Link>
-          </>
-        )}
-        <div style={{ marginLeft: "auto", display: "flex", gap: 12, alignItems: "center" }}>
-          {isAuthenticated ? (
-            <>
-              <span style={{ color: "#fff", fontSize: 14 }}>{user?.name || user?.email}</span>
-              <button onClick={logout} style={{
-                padding: "6px 12px", borderRadius: 4, border: "1px solid #fff",
-                background: "transparent", color: "#fff", cursor: "pointer", fontSize: 13,
-              }}>
-                Sign Out
-              </button>
-            </>
-          ) : (
-            <Link to="/login" style={{ color: "#fff", textDecoration: "none", fontSize: 14 }}>Sign In</Link>
-          )}
-        </div>
-      </nav>
-      <main style={{ padding: 32, maxWidth: 1200, margin: "0 auto" }}>{children}</main>
-    </div>
-  );
-}
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider, ProtectedRoute, LoginPage, RegisterPage, PortalSelectionPage, ToastProvider } from "@moc/shared";
+import { ProductList } from "./pages/Products/index.js";
+import { InventoryList } from "./pages/Inventory/index.js";
+import { OrderList } from "./pages/Orders/index.js";
+import { UserLayout } from "./components/UserLayout.js";
 
 export function App() {
   return (
@@ -64,10 +17,10 @@ export function App() {
               <Route index element={<PortalSelectionPage />} />
             </Route>
             <Route element={<ProtectedRoute portalType="user" />}>
-              <Route path="/" element={<Layout><h1>Dashboard</h1><p>Welcome to the user portal.</p></Layout>} />
-              <Route path="/products" element={<Layout><ProductList /></Layout>} />
-              <Route path="/inventory" element={<Layout><InventoryList /></Layout>} />
-              <Route path="/orders" element={<Layout><OrderList /></Layout>} />
+              <Route path="/" element={<UserLayout><h1 style={pageTitleStyle}>Dashboard</h1><p>Welcome to the user portal.</p></UserLayout>} />
+              <Route path="/products" element={<UserLayout><ProductList /></UserLayout>} />
+              <Route path="/inventory" element={<UserLayout sidebar><InventoryList /></UserLayout>} />
+              <Route path="/orders" element={<UserLayout><OrderList /></UserLayout>} />
             </Route>
           </Routes>
         </BrowserRouter>
@@ -75,3 +28,7 @@ export function App() {
     </AuthProvider>
   );
 }
+
+const pageTitleStyle: React.CSSProperties = {
+  fontSize: 24, fontWeight: 600, color: "#111", margin: 0,
+};
