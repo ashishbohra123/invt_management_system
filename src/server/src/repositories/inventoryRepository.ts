@@ -63,6 +63,24 @@ export const inventoryRepository = {
     return result.rows[0] ? mapRow(result.rows[0]) : null;
   },
 
+  async findByIdWithProduct(id: string): Promise<ReturnType<typeof mapRow> & { productName: string; productSku: string; reorderThreshold: number } | null> {
+    const result = await pool.query(
+      `SELECT inv.*, p.name as product_name, p.sku as product_sku, p.reorder_threshold as reorder_threshold
+       FROM inventory inv
+       JOIN products p ON p.id = inv.product_id
+       WHERE inv.id = $1`,
+      [id],
+    );
+    if (!result.rows[0]) return null;
+    const row = result.rows[0];
+    return {
+      ...mapRow(row),
+      productName: row.product_name,
+      productSku: row.product_sku,
+      reorderThreshold: row.reorder_threshold,
+    };
+  },
+
   async findByProductId(productId: string): Promise<ReturnType<typeof mapRow> | null> {
     const result = await pool.query(`SELECT * FROM inventory WHERE product_id = $1`, [productId]);
     return result.rows[0] ? mapRow(result.rows[0]) : null;

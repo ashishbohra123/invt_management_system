@@ -19,11 +19,48 @@ inventoryRouter.use(authenticate);
  *         schema:
  *           type: string
  *         description: Filter by tenant ID
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by product name or SKU
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *         description: Items per page
  *     responses:
  *       200:
- *         description: An array of inventory records
+ *         description: Paginated inventory records
  */
 inventoryRouter.get("/", inventoryController.list);
+
+/**
+ * @openapi
+ * /inventory/{id}:
+ *   get:
+ *     tags: [Inventory]
+ *     summary: Get an inventory record by ID
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: The inventory record
+ *       404:
+ *         description: Inventory record not found
+ */
+inventoryRouter.get("/:id", inventoryController.getById);
 
 /**
  * @openapi

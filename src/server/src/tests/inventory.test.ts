@@ -35,22 +35,85 @@ describe("Inventory API", () => {
   });
 
   describe("GET /api/inventory", () => {
-    it("returns a list of inventory records", async () => {
-      const countRow = { total: "0" };
+    it("returns a paginated list of inventory records", async () => {
+      const countRow = { total: "2" };
+      const dataRow = {
+        id: "inv-1",
+        product_id: "prod-1",
+        tenant_id: "tenant-1",
+        current_inventory: 50,
+        product_name: "Widget",
+        product_sku: "SKU-001",
+        reorder_threshold: 10,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
       mockQuery
         .mockResolvedValueOnce({ rows: [countRow] })
-        .mockResolvedValueOnce({ rows: [] });
+        .mockResolvedValueOnce({ rows: [dataRow, { ...dataRow, id: "inv-2", current_inventory: 5, product_name: "Gadget", product_sku: "SKU-002" }] });
+
       const res = await request(createApp()).get("/api/inventory").set(authHeader());
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(Array.isArray(res.body.data.data)).toBe(true);
-      expect(res.body.data.total).toBe(0);
-      expect(res.body.data.page).toBe(1);
-      expect(res.body.data.totalPages).toBe(0);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data).toHaveLength(2);
+      expect(res.body.total).toBe(2);
+      expect(res.body.page).toBe(1);
+      expect(res.body.totalPages).toBe(1);
+      expect(res.body.data[0].productName).toBe("Widget");
+    });
+
+    it("respects search param", async () => {
+      mockQuery
+        .mockResolvedValueOnce({ rows: [{ total: "1" }] })
+        .mockResolvedValueOnce({ rows: [{ id: "inv-1", product_id: "prod-1", tenant_id: "tenant-1", current_inventory: 10, product_name: "Widget", product_sku: "SKU-001", reorder_threshold: 5, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }] });
+
+      const res = await request(createApp()).get("/api/inventory?search=Widget").set(authHeader());
+      expect(res.status).toBe(200);
+      expect(res.body.data).toHaveLength(1);
     });
 
     it("requires authentication", async () => {
       const res = await request(createApp()).get("/api/inventory");
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe("GET /api/inventory/:id", () => {
+    it("returns a single inventory record with product details", async () => {
+      const row = {
+        id: "inv-1",
+        product_id: "prod-1",
+        tenant_id: "tenant-1",
+        current_inventory: 50,
+        product_name: "Widget",
+        product_sku: "SKU-001",
+        reorder_threshold: 10,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      mockQuery.mockResolvedValueOnce({ rows: [row] });
+
+      const res = await request(createApp())
+        .get("/api/inventory/inv-1")
+        .set(authHeader());
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.currentInventory).toBe(50);
+      expect(res.body.data.productName).toBe("Widget");
+      expect(res.body.data.productSku).toBe("SKU-001");
+    });
+
+    it("returns 404 for missing record", async () => {
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+      const res = await request(createApp())
+        .get("/api/inventory/nonexistent")
+        .set(authHeader());
+      expect(res.status).toBe(404);
+    });
+
+    it("requires authentication", async () => {
+      const res = await request(createApp()).get("/api/inventory/inv-1");
       expect(res.status).toBe(401);
     });
   });

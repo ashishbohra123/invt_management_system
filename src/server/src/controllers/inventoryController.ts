@@ -12,12 +12,22 @@ export const inventoryController = {
       const p = page ?? 1;
       const ps = pageSize ?? 10;
       res.json({
+        success: true,
         data: result.data,
         total: result.total,
         page: p,
         pageSize: ps,
         totalPages: Math.ceil(result.total / ps),
       });
+    } catch (err) {
+      nextError(err, res);
+    }
+  },
+
+  async getById(req: Request, res: Response) {
+    try {
+      const record = await inventoryService.getById(req.params.id);
+      res.json(record);
     } catch (err) {
       nextError(err, res);
     }

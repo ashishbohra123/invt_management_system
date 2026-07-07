@@ -6,6 +6,14 @@ export const inventoryService = {
     return inventoryRepository.findAll(tenantId, search, page, pageSize);
   },
 
+  async getById(id: string) {
+    const record = await inventoryRepository.findByIdWithProduct(id);
+    if (!record) {
+      throw new AppError("Inventory record not found", "NOT_FOUND");
+    }
+    return record;
+  },
+
   async updateStock(id: string, quantity: number) {
     const existing = await inventoryRepository.findById(id);
     if (!existing) {
