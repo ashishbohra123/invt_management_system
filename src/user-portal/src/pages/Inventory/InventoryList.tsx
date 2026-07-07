@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
-  DataTable, Badge, Button, Modal, Input, SearchBar,
+  DataTable, Badge, Button, Modal, Input, SearchBar, inventoryService, apiPut, API_PATHS,
 } from "@moc/shared";
 import type { Column } from "@moc/shared";
 
@@ -10,7 +10,6 @@ interface InventoryItem {
   createdAt: string; updatedAt: string;
 }
 
-const API_PATH = "/api/inventory";
 const pageSize = 10;
 
 function getStockLevel(item: InventoryItem): { label: string; variant: "danger" | "warning" | "success" | "info" } {
@@ -37,32 +36,23 @@ export function InventoryList() {
   const [updating, setUpdating] = useState<InventoryItem | null>(null);
   const [updateQty, setUpdateQty] = useState("");
   const [updateSaving, setUpdateSaving] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
 
   const fetchItems = useCallback(async () => {
-    if (abortRef.current) abortRef.current.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
     setLoading(true); setError(null);
     try {
       const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
       if (search) params.set("search", search);
-      const res = await fetch(`${API_PATH}?${params}`, { signal: controller.signal });
-      if (!res.ok) throw new Error("Failed to fetch inventory");
-      const json = await res.json();
-      const inner = json.data ?? json;
-      const list = Array.isArray(inner) ? inner : Array.isArray(inner?.data) ? inner.data : [];
+      const result = await inventoryService.list(params.toString());
+      const list = result?.data ?? [];
       setItems(list);
-      setTotal(inner?.total ?? list.length);
-      setTotalPages(inner?.totalPages ?? Math.max(1, Math.ceil((inner?.total ?? list.length) / pageSize)));
+      setTotal(result?.total ?? list.length);
+      setTotalPages(result?.totalPages ?? 1);
     } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally { setLoading(false); }
   }, [page, search]);
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
-  useEffect(() => () => { if (abortRef.current) abortRef.current.abort(); }, []);
 
   const lowStockCount = items.filter((i) => i.currentInventory <= i.reorderThreshold && i.currentInventory > 0).length;
   const outOfStockCount = items.filter((i) => i.currentInventory === 0).length;
@@ -73,12 +63,7 @@ export function InventoryList() {
     if (isNaN(qty) || qty < 0) return;
     setUpdateSaving(true);
     try {
-      const res = await fetch(`${API_PATH}/${updating.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ current_inventory: qty }),
-      });
-      if (!res.ok) throw new Error("Failed to update stock");
+      await apiPut(`${API_PATHS.INVENTORY}/${updating.id}`, { current_inventory: qty });
       setUpdating(null);
       setUpdateQty("");
       fetchItems();

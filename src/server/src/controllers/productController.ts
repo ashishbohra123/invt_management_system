@@ -6,7 +6,7 @@ export const productController = {
     try {
       const tenantId = req.query.tenant_id as string | undefined;
       const products = await productService.list(tenantId);
-      res.json(products);
+      res.json({ data: products, total: products.length, page: 1, pageSize: products.length, totalPages: 1 });
     } catch (err) {
       nextError(err, res);
     }
