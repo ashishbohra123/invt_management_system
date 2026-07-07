@@ -1,7 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { DataTable, Button, Badge, Modal, Input, ordersService, productsService, apiPost, apiPut, API_PATHS } from "@moc/shared";
-import { useToast } from "../../components/ui/Toast";
-import type { Column } from "@moc/shared";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Button, Card, CardContent, Badge } from "@moc/shared";
 
 interface Order {
   id: string; productId: string; productName: string; productSku: string;
@@ -10,403 +8,117 @@ interface Order {
   createdAt: string; updatedAt: string;
 }
 
-const PAGE_SIZE = 10;
+const API_PATH = "/api/orders";
 
-const STATUS_CONFIG: Record<string, { label: string; variant: "info" | "success" | "danger" | "default" }> = {
-  created: { label: "Created", variant: "info" },
-  confirmed: { label: "Confirmed", variant: "success" },
-  cancelled: { label: "Cancelled", variant: "danger" },
+const tabs = [
+  { label: "All", value: "" },
+  { label: "Pending", value: "created" },
+  { label: "Processing", value: "processing" },
+  { label: "Shipped", value: "approved" },
+  { label: "Delivered", value: "delivered" },
+];
+
+const statusColors: Record<string, "info" | "success" | "warning" | "danger" | "default"> = {
+  processing: "info", approved: "success", created: "warning", cancelled: "danger", delivered: "success",
 };
 
-const STATUS_OPTIONS = ["", "created", "confirmed", "cancelled"] as const;
-
-const statusBadgeColors: Record<string, React.CSSProperties> = {
-  created: { background: "#EFF6FF", color: "#2563EB" },
-  confirmed: { background: "#DCFCE7", color: "#16A34A" },
-  cancelled: { background: "#FEE2E2", color: "#DC2626" },
+const statusLabels: Record<string, string> = {
+  processing: "Processing", approved: "Shipped", created: "Pending", cancelled: "Cancelled", delivered: "Delivered",
 };
-
-const tableHeaderBg = "#F9FAFB";
-const cardBorder = "#E5E7EB";
-const primaryColor = "#2563EB";
-
-function OrderStatusBadge({ status }: { status: string }) {
-  const colors = statusBadgeColors[status] ?? { background: "#F1F5F9", color: "#475569" };
-  return (
-    <span style={{
-      display: "inline-block",
-      padding: "2px 10px",
-      borderRadius: 9,
-      fontSize: 12,
-      fontWeight: 600,
-      lineHeight: "20px",
-      ...colors,
-    }}>
-      {STATUS_CONFIG[status]?.label ?? status}
-    </span>
-  );
-}
-
-interface ProductOption { id: string; name: string; sku: string; }
 
 export function OrderList() {
   const [items, setItems] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("");
-  const [createOpen, setCreateOpen] = useState(false);
-  const [products, setProducts] = useState<ProductOption[]>([]);
-  const [newOrder, setNewOrder] = useState({ productId: "", quantity: 1 });
-  const [actionTarget, setActionTarget] = useState<Order | null>(null);
-  const [actionType, setActionType] = useState<"approve" | "cancel" | null>(null);
-  const [detailTarget, setDetailTarget] = useState<Order | null>(null);
-  const { toast } = useToast();
+  const [tab, setTab] = useState("");
+  const abortRef = useRef<AbortController | null>(null);
 
   const fetchItems = useCallback(async () => {
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setLoading(true); setError(null);
     try {
-      const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
-      if (statusFilter) params.set("status", statusFilter);
-      const result = await ordersService.list(params.toString());
-      setItems(result?.data ?? []);
-      setTotalPages(result?.totalPages ?? 1);
+      const params = tab ? `?status=${tab}` : "";
+      const res = await fetch(`${API_PATH}${params}`, { signal: controller.signal });
+      if (!res.ok) throw new Error("Failed to fetch orders");
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : data.data ?? [];
+      setItems(list);
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally { setLoading(false); }
-  }, [page, statusFilter]);
+  }, [tab]);
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
+  useEffect(() => () => { if (abortRef.current) abortRef.current.abort(); }, []);
 
-  const handleCreate = async () => {
-    try {
-      await apiPost(API_PATHS.ORDERS, { product_id: newOrder.productId, quantity: newOrder.quantity });
-      setCreateOpen(false);
-      setNewOrder({ productId: "", quantity: 1 });
-      toast("Order created successfully", "success");
-      fetchItems();
-    } catch (err) {
-      toast(err instanceof Error ? err.message : "Create failed", "error");
-    }
-  };
+  const countByStatus = (status: string) => status === "" ? items.length : items.filter((o) => o.status === status).length;
 
-  const openCreateModal = async () => {
-    setCreateOpen(true);
-    try {
-      const result = await productsService.list();
-      const list = result?.data ?? [];
-      setProducts(list.map((p: { id: string; name: string; sku: string }) => ({ id: p.id, name: p.name, sku: p.sku })));
-    } catch { /* silently ignore product fetch failure */ }
-  };
-
-  const handleAction = async () => {
-    if (!actionTarget || !actionType) return;
-    try {
-      if (actionType === "approve") {
-        await ordersService.approve(actionTarget.id);
-      } else {
-        await ordersService.cancel(actionTarget.id);
-      }
-      setActionTarget(null);
-      setActionType(null);
-      setDetailTarget(null);
-      toast(`Order ${actionType}d successfully`, "success");
-      fetchItems();
-    } catch (err) {
-      toast(err instanceof Error ? err.message : `${actionType} failed`, "error");
-    }
-  };
-
-  const columns: Column<Order>[] = [
-    { key: "productName", header: "Product" },
-    { key: "productSku", header: "SKU" },
-    { key: "quantity", header: "Qty" },
-    {
-      key: "status", header: "Status",
-      render: (o) => <OrderStatusBadge status={o.status} />,
-    },
-    {
-      key: "createdAt", header: "Created",
-      render: (o) => (
-        <span style={{ color: "#6B7280", fontSize: 13 }}>
-          {new Date(o.createdAt).toLocaleDateString()}
-        </span>
-      ),
-    },
-    {
-      key: "actions", header: "Actions",
-      render: (o) => (
-        <span style={{ display: "flex", gap: 8 }}>
-          {o.status === "created" && (
-            <>
-              <button
-                onClick={(e) => { e.stopPropagation(); setActionTarget(o); setActionType("approve"); }}
-                style={{
-                  padding: "4px 12px", borderRadius: 6, border: `1px solid ${primaryColor}`,
-                  background: "#fff", color: primaryColor, cursor: "pointer", fontSize: 12, fontWeight: 500,
-                }}
-              >
-                Confirm
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); setActionTarget(o); setActionType("cancel"); }}
-                style={{
-                  padding: "4px 12px", borderRadius: 6, border: "1px solid #DC2626",
-                  background: "#fff", color: "#DC2626", cursor: "pointer", fontSize: 12, fontWeight: 500,
-                }}
-              >
-                Cancel
-              </button>
-            </>
-          )}
-        </span>
-      ),
-    },
-  ];
-
-  const handleRowClick = (order: Order) => {
-    setDetailTarget(order);
-  };
+  if (loading) return <p style={{ color: "#6B7280" }}>Loading...</p>;
+  if (error) return <p style={{ color: "#DC2626" }}>{error}</p>;
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, color: "#111" }}>Orders</h1>
-        <Button onClick={openCreateModal}>+ New Order</Button>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111", margin: 0 }}>Orders</h1>
+        <Button>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          New Order
+        </Button>
       </div>
 
-      <div style={{
-        display: "flex", gap: 8, marginBottom: 20,
-        flexWrap: "wrap", alignItems: "center",
-      }}>
-        {STATUS_OPTIONS.map((s) => {
-          const isActive = statusFilter === s;
-          const label = s === "" ? "All" : STATUS_CONFIG[s]?.label ?? s;
+      <div style={{ display: "inline-flex", gap: 4, marginBottom: 24, background: "#F3F4F6", borderRadius: 8, padding: 4 }}>
+        {tabs.map((t) => (
+          <button
+            key={t.value}
+            onClick={() => setTab(t.value)}
+            style={{
+              padding: "8px 16px", border: "none", borderRadius: 6,
+              background: tab === t.value ? "#fff" : "transparent",
+              color: tab === t.value ? "#111" : "#6B7280",
+              cursor: "pointer", fontSize: 14, fontWeight: tab === t.value ? 600 : 400,
+              boxShadow: tab === t.value ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+              fontFamily: "inherit", transition: "all 0.2s",
+            }}
+          >
+            {t.label} ({countByStatus(t.value)})
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {items.length === 0 && (
+          <p style={{ color: "#9CA3AF", textAlign: "center", padding: 32 }}>No orders found.</p>
+        )}
+        {items.map((order) => {
           return (
-            <button
-              key={s}
-              onClick={() => { setStatusFilter(s); setPage(1); }}
-              style={{
-                padding: "6px 16px", borderRadius: 8, border: isActive ? "none" : `1px solid ${cardBorder}`,
-                background: isActive ? primaryColor : "#fff",
-                color: isActive ? "#fff" : "#374151",
-                cursor: "pointer", fontSize: 13, fontWeight: isActive ? 600 : 500,
-                transition: "all 0.15s",
-              }}
-            >
-              {label}
-            </button>
+            <Card key={order.id}>
+              <CardContent style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                    <span style={{ fontWeight: 600, fontSize: 14, color: "#111" }}>{order.id}</span>
+                    <Badge variant={statusColors[order.status] || "default"}>
+                      {statusLabels[order.status] || order.status}
+                    </Badge>
+                  </div>
+                  <div style={{ fontSize: 13, color: "#6B7280" }}>
+                    {order.productName} x{order.quantity}
+                  </div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 12, color: "#9CA3AF" }}>
+                    {new Date(order.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           );
         })}
       </div>
-
-      <div style={{
-        borderRadius: 12, border: `1px solid ${cardBorder}`,
-        overflow: "hidden", background: "#fff",
-      }}>
-        <DataTable<Order>
-          columns={columns}
-          data={items}
-          loading={loading}
-          error={error}
-          keyExtractor={(o) => o.id}
-          onRowClick={handleRowClick}
-        />
-      </div>
-
-      <div style={{ marginTop: 16, display: "flex", justifyContent: "center", alignItems: "center", gap: 12 }}>
-        <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
-          Previous
-        </Button>
-        <span style={{ fontSize: 14, color: "#6B7280" }}>Page {page} of {totalPages}</span>
-        <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
-          Next
-        </Button>
-      </div>
-
-      <Modal
-        open={createOpen}
-        title="New Order"
-        onClose={() => setCreateOpen(false)}
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreate}>Create</Button>
-          </>
-        }
-      >
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500, color: "#374151" }}>
-            Product
-          </label>
-          <select
-            value={newOrder.productId}
-            onChange={(e) => setNewOrder(p => ({ ...p, productId: e.target.value }))}
-            style={{
-              width: "100%", padding: "8px 12px", fontSize: 14, borderRadius: 6,
-              border: "1px solid #D1D5DB", background: "#fff", cursor: "pointer",
-              color: newOrder.productId ? "#111" : "#9CA3AF",
-            }}
-          >
-            <option value="" disabled>Select a product...</option>
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>
-            ))}
-          </select>
-        </div>
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", marginBottom: 6, fontSize: 14, fontWeight: 500, color: "#374151" }}>
-            Quantity
-          </label>
-          <Input
-            type="number"
-            value={String(newOrder.quantity)}
-            onChange={(e) => setNewOrder(p => ({ ...p, quantity: parseInt(e.target.value) || 1 }))}
-          />
-        </div>
-      </Modal>
-
-      <Modal
-        open={actionTarget !== null && actionType !== null}
-        title={actionType === "approve" ? "Approve Order" : "Cancel Order"}
-        onClose={() => { setActionTarget(null); setActionType(null); }}
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => { setActionTarget(null); setActionType(null); }}>
-              Back
-            </Button>
-            <Button
-              onClick={handleAction}
-            >
-              {actionType === "approve" ? "Approve" : "Cancel"}
-            </Button>
-          </>
-        }
-      >
-        <p style={{ margin: 0, fontSize: 14, color: "#6B7280", lineHeight: 1.6 }}>
-          Are you sure you want to {actionType} this order?
-          {actionTarget && (
-            <span style={{ display: "block", marginTop: 8, fontSize: 13, color: "#374151" }}>
-              Product: {actionTarget.productName} &middot; SKU: {actionTarget.productSku} &middot; Qty: {actionTarget.quantity}
-            </span>
-          )}
-        </p>
-      </Modal>
-
-      {detailTarget && (
-        <>
-          <div
-            style={{
-              position: "fixed", inset: 0, background: "rgba(0,0,0,0.2)",
-              zIndex: 1000,
-            }}
-            onClick={() => setDetailTarget(null)}
-          />
-          <div style={{
-            position: "fixed", top: 0, right: 0, bottom: 0,
-            width: 480, maxWidth: "100vw",
-            background: "#fff", zIndex: 1001,
-            boxShadow: "-4px 0 24px rgba(0,0,0,0.1)",
-            display: "flex", flexDirection: "column",
-            overflow: "hidden",
-          }}>
-            <div style={{
-              display: "flex", justifyContent: "space-between", alignItems: "center",
-              padding: "20px 24px", borderBottom: `1px solid ${cardBorder}`,
-            }}>
-              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#111111" }}>
-                Order Details
-              </h2>
-              <button
-                onClick={() => setDetailTarget(null)}
-                style={{
-                  background: "none", border: "none", cursor: "pointer",
-                  fontSize: 20, color: "#6B7280", padding: 4, lineHeight: 1,
-                }}
-              >
-                &times;
-              </button>
-            </div>
-
-            <div style={{ padding: 24, overflow: "auto", flex: 1 }}>
-              <div style={{ marginBottom: 24 }}>
-                <OrderStatusBadge status={detailTarget.status} />
-              </div>
-
-              <div style={{ display: "grid", gap: 20 }}>
-                <DetailRow label="Product" value={detailTarget.productName} />
-                <DetailRow label="SKU" value={detailTarget.productSku} />
-                <DetailRow label="Quantity" value={String(detailTarget.quantity)} />
-                <DetailRow label="Order ID" value={detailTarget.id} />
-                <DetailRow label="Status" value={STATUS_CONFIG[detailTarget.status]?.label ?? detailTarget.status} />
-                <DetailRow
-                  label="Created"
-                  value={new Date(detailTarget.createdAt).toLocaleString()}
-                />
-                <DetailRow
-                  label="Last Updated"
-                  value={new Date(detailTarget.updatedAt).toLocaleString()}
-                />
-                <DetailRow label="Created By" value={detailTarget.createdBy} />
-                {detailTarget.approvedBy && (
-                  <DetailRow label="Approved By" value={detailTarget.approvedBy} />
-                )}
-                {detailTarget.cancelledBy && (
-                  <DetailRow label="Cancelled By" value={detailTarget.cancelledBy} />
-                )}
-              </div>
-            </div>
-
-            {detailTarget.status === "created" && (
-              <div style={{
-                padding: "16px 24px", borderTop: `1px solid ${cardBorder}`,
-                display: "flex", gap: 12, justifyContent: "flex-end",
-              }}>
-                <button
-                  onClick={() => {
-                    setActionTarget(detailTarget);
-                    setActionType("cancel");
-                  }}
-                  style={{
-                    padding: "8px 20px", borderRadius: 8, border: `1px solid #DC2626`,
-                    background: "#fff", color: "#DC2626", cursor: "pointer",
-                    fontSize: 14, fontWeight: 500,
-                  }}
-                >
-                  Cancel Order
-                </button>
-                <button
-                  onClick={() => {
-                    setActionTarget(detailTarget);
-                    setActionType("approve");
-                  }}
-                  style={{
-                    padding: "8px 20px", borderRadius: 8, border: "none",
-                    background: primaryColor, color: "#fff", cursor: "pointer",
-                    fontSize: 14, fontWeight: 500,
-                  }}
-                >
-                  Approve Order
-                </button>
-              </div>
-            )}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <span style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#6B7280", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-        {label}
-      </span>
-      <span style={{ fontSize: 14, color: "#111111", fontWeight: 500 }}>
-        {value}
-      </span>
     </div>
   );
 }
