@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef, type FormEvent } from "react";
-import { Role, PortalType, isValidEmail } from "@moc/shared";
-
-const USERS_PATH = "/api/users";
+import { Role, PortalType, isValidEmail, Modal, Input, Button, usersService } from "@moc/shared";
 
 interface UserFormModalProps {
   open: boolean;
@@ -31,8 +29,7 @@ const ROLE_OPTIONS = [
 
 const PORTAL_OPTIONS = [
   { value: PortalType.ADMIN, label: "Admin Portal" },
-  { value: PortalType.PARTNER, label: "Partner Portal" },
-  { value: PortalType.CUSTOMER, label: "Customer Portal" },
+  { value: PortalType.USER, label: "User Portal" },
 ];
 
 const initialForm = {
@@ -42,6 +39,19 @@ const initialForm = {
   role: Role.VIEWER,
   portalAccess: [PortalType.ADMIN] as string[],
   isActive: true,
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block", marginBottom: 4, fontWeight: 500, fontSize: 14, color: "#374151",
+};
+const fieldStyle: React.CSSProperties = { marginBottom: 16 };
+const selectStyle: React.CSSProperties = {
+  width: "100%", padding: "10px 14px", border: "1px solid #d1d5db",
+  borderRadius: 6, fontSize: 14, outline: "none", boxSizing: "border-box",
+  color: "#111", background: "#fff",
+};
+const errorTextStyle: React.CSSProperties = {
+  color: "#dc2626", fontSize: 12, marginTop: 2, display: "block",
 };
 
 export function UserFormModal({ open, onClose, editUser, onSave }: UserFormModalProps) {
@@ -69,7 +79,7 @@ export function UserFormModal({ open, onClose, editUser, onSave }: UserFormModal
         name: editUser.name || "",
         email: editUser.email || "",
         password: "",
-        role: editUser.role || Role.VIEWER,
+        role: (editUser.role as Role) || Role.VIEWER,
         portalAccess: editUser.portalAccess?.length ? editUser.portalAccess : [PortalType.ADMIN],
         isActive: editUser.status === "active",
       });
@@ -103,22 +113,23 @@ export function UserFormModal({ open, onClose, editUser, onSave }: UserFormModal
     if (!validate()) return;
     setSaving(true);
     try {
-      const body = {
-        name: form.name.trim(),
-        email: form.email.trim(),
-        role: form.role,
-        status: form.isActive ? "active" : "inactive",
-        portalAccess: form.portalAccess,
-        ...(isEdit ? {} : { password: form.password }),
-      };
-      const method = isEdit ? "PUT" : "POST";
-      const url = isEdit ? `${USERS_PATH}/${editUser!.id}` : USERS_PATH;
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) throw new Error(`Failed to ${isEdit ? "update" : "create"} user`);
+      if (isEdit) {
+        await usersService.update(editUser!.id, {
+          name: form.name.trim(),
+          email: form.email.trim(),
+          role: form.role as Role,
+          status: form.isActive ? "active" as const : "inactive" as const,
+          portalAccess: form.portalAccess,
+        });
+      } else {
+        await usersService.create({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          password: form.password,
+          role: form.role as Role,
+          portalAccess: form.portalAccess,
+        });
+      }
       setToast({ type: "success", message: `User ${isEdit ? "updated" : "created"} successfully` });
       setTimeout(() => { if (mountedRef.current) { onSave(); onClose(); } }, 800);
     } catch (err) {
@@ -142,172 +153,110 @@ export function UserFormModal({ open, onClose, editUser, onSave }: UserFormModal
     );
   }
 
-  if (!open) return null;
-
   return (
     <>
-      <div style={overlayStyle} onClick={onClose} />
-      <div style={modalStyle}>
-        <div style={headerStyle}>
-          <h2 style={{ margin: 0, fontSize: 18 }}>{isEdit ? "Edit User" : "Create User"}</h2>
-          <button onClick={onClose} style={closeBtnStyle}>&times;</button>
-        </div>
-
+      <Modal
+        open={open}
+        title={isEdit ? "Edit User" : "Create User"}
+        onClose={onClose}
+        footer={
+          <div style={{ display: "flex", gap: 8 }}>
+            <Button variant="secondary" onClick={onClose}>Cancel</Button>
+            <Button onClick={handleSubmit} disabled={saving}>
+              {saving ? "Saving..." : isEdit ? "Update User" : "Create User"}
+            </Button>
+          </div>
+        }
+      >
         <form onSubmit={handleSubmit}>
-          <div style={bodyStyle}>
-            <div style={fieldStyle}>
-              <label style={labelStyle}>Name</label>
-              <input
-                required
-                value={form.name}
-                onChange={(e) => setField("name", e.target.value)}
-                style={inputStyle}
-              />
-              {errors.name && <span style={errorTextStyle}>{errors.name}</span>}
-            </div>
-
-            <div style={fieldStyle}>
-              <label style={labelStyle}>Email</label>
-              <input
-                type="email"
-                required
-                value={form.email}
-                onChange={(e) => setField("email", e.target.value)}
-                style={inputStyle}
-              />
-              {errors.email && <span style={errorTextStyle}>{errors.email}</span>}
-            </div>
-
-            {!isEdit && (
-              <div style={fieldStyle}>
-                <label style={labelStyle}>Password</label>
-                <input
-                  type="password"
-                  required
-                  value={form.password}
-                  onChange={(e) => setField("password", e.target.value)}
-                  style={inputStyle}
-                />
-                {errors.password && <span style={errorTextStyle}>{errors.password}</span>}
-              </div>
-            )}
-
-            <div style={fieldStyle}>
-              <label style={labelStyle}>Role</label>
-              <select
-                value={form.role}
-                onChange={(e) => setField("role", e.target.value)}
-                style={inputStyle}
-              >
-                {ROLE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div style={fieldStyle}>
-              <label style={labelStyle}>Portal Access</label>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {PORTAL_OPTIONS.map((opt) => (
-                  <label key={opt.value} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, cursor: "pointer" }}>
-                    <input
-                      type="checkbox"
-                      checked={form.portalAccess.includes(opt.value)}
-                      onChange={() => togglePortalAccess(opt.value)}
-                    />
-                    {opt.label}
-                  </label>
-                ))}
-              </div>
-              {errors.portalAccess && <span style={errorTextStyle}>{errors.portalAccess}</span>}
-            </div>
-
-            <div style={fieldStyle}>
-              <label style={{ ...labelStyle, display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                <input
-                  type="checkbox"
-                  checked={form.isActive}
-                  onChange={(e) => setField("isActive", e.target.checked)}
-                />
-                Active
-              </label>
-            </div>
+          <div style={fieldStyle}>
+            <label style={labelStyle}>Name</label>
+            <Input
+              required
+              value={form.name}
+              onChange={(e) => setField("name", e.target.value)}
+            />
+            {errors.name && <span style={errorTextStyle}>{errors.name}</span>}
           </div>
 
-          <div style={footerStyle}>
-            <button type="button" onClick={onClose} style={cancelBtnStyle}>Cancel</button>
-            <button type="submit" disabled={saving} style={submitBtnStyle}>
-              {saving ? "Saving..." : isEdit ? "Update User" : "Create User"}
-            </button>
+          <div style={fieldStyle}>
+            <label style={labelStyle}>Email</label>
+            <Input
+              type="email"
+              required
+              value={form.email}
+              onChange={(e) => setField("email", e.target.value)}
+            />
+            {errors.email && <span style={errorTextStyle}>{errors.email}</span>}
+          </div>
+
+          {!isEdit && (
+            <div style={fieldStyle}>
+              <label style={labelStyle}>Password</label>
+              <Input
+                type="password"
+                required
+                value={form.password}
+                onChange={(e) => setField("password", e.target.value)}
+              />
+              {errors.password && <span style={errorTextStyle}>{errors.password}</span>}
+            </div>
+          )}
+
+          <div style={fieldStyle}>
+            <label style={labelStyle}>Role</label>
+            <select
+              value={form.role}
+              onChange={(e) => setField("role", e.target.value as Role)}
+              style={selectStyle}
+            >
+              {ROLE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={fieldStyle}>
+            <label style={labelStyle}>Portal Access</label>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {PORTAL_OPTIONS.map((opt) => (
+                <label key={opt.value} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, cursor: "pointer", color: "#374151" }}>
+                  <input
+                    type="checkbox"
+                    checked={form.portalAccess.includes(opt.value)}
+                    onChange={() => togglePortalAccess(opt.value)}
+                    style={{ accentColor: "#2563eb" }}
+                  />
+                  {opt.label}
+                </label>
+              ))}
+            </div>
+            {errors.portalAccess && <span style={errorTextStyle}>{errors.portalAccess}</span>}
+          </div>
+
+          <div style={fieldStyle}>
+            <label style={{ ...labelStyle, display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={form.isActive}
+                onChange={(e) => setField("isActive", e.target.checked)}
+                style={{ accentColor: "#2563eb" }}
+              />
+              Active
+            </label>
           </div>
         </form>
 
         {toast && (
-          <div style={toastStyle(toast.type)}>
+          <div style={{
+            padding: "10px 16px", borderRadius: 6, fontSize: 14, textAlign: "center",
+            color: "#fff", marginTop: 12,
+            background: toast.type === "success" ? "#166534" : "#991b1b",
+          }}>
             {toast.message}
           </div>
         )}
-      </div>
+      </Modal>
     </>
   );
 }
-
-const overlayStyle: React.CSSProperties = {
-  position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 999,
-};
-
-const modalStyle: React.CSSProperties = {
-  position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
-  background: "#fff", borderRadius: 8, width: 480, maxWidth: "90vw",
-  maxHeight: "85vh", overflowY: "auto", zIndex: 1000,
-  boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
-};
-
-const headerStyle: React.CSSProperties = {
-  display: "flex", justifyContent: "space-between", alignItems: "center",
-  padding: "16px 20px", borderBottom: "1px solid #e0e0e0",
-};
-
-const closeBtnStyle: React.CSSProperties = {
-  background: "none", border: "none", fontSize: 24, cursor: "pointer",
-  color: "#666", lineHeight: 1, padding: "0 4px",
-};
-
-const bodyStyle: React.CSSProperties = { padding: "16px 20px" };
-
-const fieldStyle: React.CSSProperties = { marginBottom: 16 };
-
-const labelStyle: React.CSSProperties = {
-  display: "block", marginBottom: 4, fontWeight: 500, fontSize: 14,
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%", padding: "8px 10px", border: "1px solid #ccc",
-  borderRadius: 4, boxSizing: "border-box", fontSize: 14, outline: "none",
-};
-
-const errorTextStyle: React.CSSProperties = {
-  color: "#d32f2f", fontSize: 12, marginTop: 2, display: "block",
-};
-
-const footerStyle: React.CSSProperties = {
-  display: "flex", justifyContent: "flex-end", gap: 8,
-  padding: "12px 20px", borderTop: "1px solid #e0e0e0",
-};
-
-const cancelBtnStyle: React.CSSProperties = {
-  padding: "8px 16px", border: "1px solid #ccc", borderRadius: 4,
-  background: "#fff", cursor: "pointer", fontSize: 14,
-};
-
-const submitBtnStyle: React.CSSProperties = {
-  padding: "8px 16px", border: "none", borderRadius: 4,
-  background: "#1976d2", color: "#fff", cursor: "pointer", fontSize: 14,
-};
-
-const toastStyle = (type: "success" | "error"): React.CSSProperties => ({
-  position: "absolute", bottom: -56, left: 20, right: 20,
-  padding: "10px 16px", borderRadius: 4, fontSize: 14, textAlign: "center",
-  color: "#fff", background: type === "success" ? "#2e7d32" : "#d32f2f",
-  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-});

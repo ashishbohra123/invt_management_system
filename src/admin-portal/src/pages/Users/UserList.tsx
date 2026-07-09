@@ -1,18 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { usersService, DataTable, Button, SearchBar, Badge } from "@moc/shared";
+import type { User } from "@moc/shared";
+import type { Column } from "@moc/shared";
 import { UserFormModal } from "./UserFormModal";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  status: "active" | "inactive";
-  portalAccess?: string[];
-  createdAt: string;
-}
-
-const USERS_PATH = "/api/users";
+const iconEdit = "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7 M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z";
+const iconDelete = "M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2";
 
 export function UserList() {
   const [users, setUsers] = useState<User[]>([]);
@@ -21,6 +15,7 @@ export function UserList() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
@@ -36,25 +31,12 @@ export function UserList() {
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
-      if (search) params.set("search", search);
-      const res = await fetch(`${USERS_PATH}?${params}`, { signal: controller.signal });
-      if (!res.ok) throw new Error("Failed to fetch users");
-      const data = await res.json();
-      const inner = data.data;
-      const items = Array.isArray(inner)
-        ? inner
-        : Array.isArray(inner?.data)
-          ? inner.data
-          : [];
-      setUsers(items);
-      setTotalPages(
-        inner?.totalPages ??
-          Math.max(
-            1,
-            Math.ceil((inner?.total ?? items.length) / pageSize)
-          )
-      );
+      const params: { page?: number; pageSize?: number; search?: string } = { page, pageSize };
+      if (search) params.search = search;
+      const res = await usersService.list(params, controller.signal);
+      setUsers(res.data ?? []);
+      setTotal(res.total ?? 0);
+      setTotalPages(res.totalPages ?? 1);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -66,16 +48,13 @@ export function UserList() {
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
   useEffect(() => {
-    return () => {
-      if (abortRef.current) abortRef.current.abort();
-    };
+    return () => { if (abortRef.current) abortRef.current.abort(); };
   }, []);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
-      const res = await fetch(`${USERS_PATH}/${deleteTarget.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete user");
+      await usersService.delete(deleteTarget.id);
       setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
       setDeleteTarget(null);
       setDeleteError(null);
@@ -100,72 +79,104 @@ export function UserList() {
     setEditingUser(null);
   }
 
+  const from = (page - 1) * pageSize + 1;
+  const to = Math.min(page * pageSize, total);
+
+  const columns: Column<User>[] = [
+    { key: "name", header: "Name", render: (u) => <span style={{ fontWeight: 500 }}>{u.name}</span> },
+    { key: "email", header: "Email" },
+    {
+      key: "role", header: "Role",
+      render: (u) => <Badge variant="default">{u.role}</Badge>,
+    },
+    {
+      key: "status", header: "Status",
+      render: (u) => (
+        <Badge variant={u.status === "active" ? "success" : "danger"}>{u.status}</Badge>
+      ),
+    },
+    {
+      key: "createdAt", header: "Created",
+      render: (u) => new Date(u.createdAt).toLocaleDateString(),
+    },
+    {
+      key: "actions", header: "Actions",
+      render: (u) => (
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            title="Edit"
+            onClick={() => openEdit(u)}
+            style={iconBtnStyle}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#F3F4F6"; e.currentTarget.style.borderColor = "#9CA3AF"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.borderColor = "#D1D5DB"; }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d={iconEdit} /></svg>
+          </button>
+          <button
+            title="Delete"
+            onClick={() => setDeleteTarget(u)}
+            style={iconBtnStyle}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#FEF2F2"; e.currentTarget.style.color = "#EF4444"; e.currentTarget.style.borderColor = "#FECACA"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.color = "#6B7280"; e.currentTarget.style.borderColor = "#D1D5DB"; }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d={iconDelete} /></svg>
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div>
-      <h1>Users</h1>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-        <input
-          type="text"
-          placeholder="Search users..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          style={{ padding: 8, width: 300 }}
-        />
-        <button onClick={openCreate} style={newBtnStyle}>
-          + New User
-        </button>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111", margin: 0 }}>User Management</h1>
+        <Button onClick={openCreate}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Add User
+        </Button>
       </div>
 
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {deleteError && <p style={{ color: "red" }}>{deleteError}</p>}
+      <SearchBar
+        value={search}
+        onChange={(v) => { setSearch(v); setPage(1); }}
+        placeholder="Search users by name, email, or role..."
+      />
 
-      {!loading && !error && (
-        <div style={{ overflowX: "auto", borderRadius: 8, border: "1px solid #e0e0e0" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ background: "#f5f5f5", textAlign: "left" }}>
-              <th style={thStyle}>Name</th>
-              <th style={thStyle}>Email</th>
-              <th style={thStyle}>Role</th>
-              <th style={thStyle}>Status</th>
-              <th style={thStyle}>Created</th>
-              <th style={thStyle}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.length === 0 && (
-              <tr><td colSpan={6} style={{ padding: 24, textAlign: "center" }}>No users found.</td></tr>
-            )}
-            {users.map((user) => (
-              <tr key={user.id} style={{ borderBottom: "1px solid #e0e0e0" }}>
-                <td style={tdStyle}>{user.name}</td>
-                <td style={tdStyle}>{user.email}</td>
-                <td style={tdStyle}>{user.role}</td>
-                <td style={tdStyle}>
-                  <span style={{ color: user.status === "active" ? "#2e7d32" : "#d32f2f" }}>
-                    {user.status}
-                  </span>
-                </td>
-                <td style={tdStyle}>{new Date(user.createdAt).toLocaleDateString()}</td>
-                <td style={tdStyle}>
-                  <button onClick={() => openEdit(user)} style={editBtnStyle}>Edit</button>
-                  <button onClick={() => setDeleteTarget(user)} style={deleteBtnStyle}>
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        data={users}
+        loading={loading}
+        error={error}
+        emptyMessage="No users found."
+        keyExtractor={(u) => u.id}
+        footer={
+          <div style={paginationStyle}>
+            <span style={{ fontSize: 14, color: "#6B7280" }}>
+              Showing {total > 0 ? from : 0} to {to} of {total} entries
+            </span>
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}>
+              <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} style={pageBtnStyle}>Previous</button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  style={{
+                    ...pageBtnStyle,
+                    ...(p === page ? { background: "#2563EB", color: "#fff", borderColor: "#2563EB" } : {}),
+                  }}
+                >
+                  {p}
+                </button>
+              ))}
+              <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} style={pageBtnStyle}>Next</button>
+            </div>
+          </div>
+        }
+      />
 
-      <div style={{ marginTop: 16, display: "flex", justifyContent: "center", gap: 8 }}>
-        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} style={btnStyle}>Previous</button>
-        <span style={{ padding: "8px 0" }}>Page {page} of {totalPages}</span>
-        <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} style={btnStyle}>Next</button>
-      </div>
+      {deleteError && <p style={{ color: "#DC2626", fontSize: 14, marginTop: 8 }}>{deleteError}</p>}
 
       <UserFormModal
         open={modalOpen}
@@ -188,17 +199,21 @@ export function UserList() {
   );
 }
 
-const thStyle: React.CSSProperties = { padding: 12, fontWeight: 600, borderBottom: "2px solid #e0e0e0" };
-const tdStyle: React.CSSProperties = { padding: 12 };
-const btnStyle: React.CSSProperties = { padding: "8px 16px", cursor: "pointer" };
-const newBtnStyle: React.CSSProperties = {
-  padding: "8px 16px", background: "#1976d2", color: "#fff",
-  border: "none", borderRadius: 4, cursor: "pointer", fontSize: 14,
+const iconBtnStyle: React.CSSProperties = {
+  width: 36, height: 36,
+  border: "1px solid #D1D5DB", background: "#fff",
+  borderRadius: 6, cursor: "pointer",
+  display: "flex", alignItems: "center", justifyContent: "center",
+  color: "#6B7280", transition: "all 0.2s",
 };
-const editBtnStyle: React.CSSProperties = {
-  marginRight: 8, color: "#1976d2", border: "none",
-  background: "none", cursor: "pointer", fontSize: 14,
+
+const paginationStyle: React.CSSProperties = {
+  display: "flex", alignItems: "center", justifyContent: "space-between",
+  padding: 16, borderTop: "1px solid #F3F4F6",
 };
-const deleteBtnStyle: React.CSSProperties = {
-  color: "#d32f2f", border: "none", background: "none", cursor: "pointer", fontSize: 14,
+
+const pageBtnStyle: React.CSSProperties = {
+  padding: "8px 12px", border: "1px solid #D1D5DB",
+  background: "#fff", borderRadius: 6, cursor: "pointer",
+  fontSize: 13, color: "#374151",
 };

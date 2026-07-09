@@ -213,27 +213,18 @@ Opens at http://localhost:3001. Routes:
 - `/users` — User management (CRUD with search, pagination, role/portal access)
 - `/tenants` — Tenant management (CRUD with domain management)
 
-### Partner Portal
+### User Portal
 
 ```bash
-cd src/partner-portal
+cd src/user-portal
 npm run dev
 ```
 
 Opens at http://localhost:3002. Routes:
 - `/` — Dashboard
-- `/profile` — Partner profile management
-
-### Customer Portal
-
-```bash
-cd src/customer-portal
-npm run dev
-```
-
-Opens at http://localhost:3003. Routes:
-- `/` — Dashboard
-- `/profile` — My profile
+- `/products` — Product catalog
+- `/inventory` — Stock levels
+- `/orders` — Order management
 
 ## Docker Setup
 
@@ -247,8 +238,7 @@ This starts:
 - **postgres** — PostgreSQL 16 with auto-schema initialization
 - **server** — Express API (port 3000)
 - **admin-portal** — Admin frontend via nginx (port 3001)
-- **partner-portal** — Partner frontend via nginx (port 3002)
-- **customer-portal** — Customer frontend via nginx (port 3003)
+- **user-portal** — User frontend via nginx (port 3002)
 
 Stop all services:
 
@@ -290,8 +280,7 @@ invt_management_system/
 │   │       ├── routes/         # Route definitions
 │   │       └── services/       # Business logic
 │   ├── admin-portal/           # React + Vite admin SPA
-│   ├── partner-portal/         # React + Vite partner SPA
-│   ├── customer-portal/        # React + Vite customer SPA
+│   ├── user-portal/            # React + Vite user SPA
 │   └── db/                     # Database
 │       ├── migrations/         # Schema migrations
 │       ├── seeds/              # Seed data scripts

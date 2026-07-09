@@ -1,4 +1,4 @@
-import { Role, PortalType } from "../enums/index.js";
+import { Role } from "../enums/index.js";
 
 export interface User {
   id: string;
@@ -6,8 +6,8 @@ export interface User {
   email: string;
   role: Role;
   status: "active" | "inactive";
-  portalAccess: PortalType[];
   tenantId?: string;
+  portalAccess?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -17,8 +17,8 @@ export interface CreateUserInput {
   email: string;
   password: string;
   role: Role;
-  portalAccess: PortalType[];
   tenantId?: string;
+  portalAccess?: string[];
 }
 
 export interface UpdateUserInput {
@@ -26,7 +26,7 @@ export interface UpdateUserInput {
   email?: string;
   role?: Role;
   status?: "active" | "inactive";
-  portalAccess?: PortalType[];
+  portalAccess?: string[];
 }
 
 export interface UserListResponse {

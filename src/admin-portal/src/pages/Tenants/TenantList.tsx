@@ -1,12 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
 import { tenantsService, type Tenant } from "@moc/shared";
+import { DataTable, Button, SearchBar, Badge, Modal } from "@moc/shared";
+import type { Column } from "@moc/shared";
 import { TenantFormModal } from "./TenantFormModal";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
+
+const iconEdit = "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7 M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z";
+const iconDelete = "M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2";
 
 export function TenantList() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Tenant | null>(null);
@@ -50,53 +56,92 @@ export function TenantList() {
     setModalOpen(true);
   }
 
+  const filteredTenants = tenants.filter((t) =>
+    !search ||
+    t.name.toLowerCase().includes(search.toLowerCase()) ||
+    (t.domains ?? []).some((d) => d.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  const columns: Column<Tenant>[] = [
+    { key: "name", header: "Tenant Name", render: (t) => <span style={{ fontWeight: 500 }}>{t.name}</span> },
+    {
+      key: "domain", header: "Domain",
+      render: (t) => (t.domains ?? [])[0] || "\u2014",
+    },
+    {
+      key: "contact", header: "Contact",
+      render: () => (
+        <div>
+          <div style={{ fontSize: 14 }}>{"\u2014"}</div>
+          <small style={{ color: "#6B7280" }}>{"\u2014"}</small>
+        </div>
+      ),
+    },
+    {
+      key: "status", header: "Status",
+      render: (t) => (
+        <Badge variant={t.status === "active" ? "success" : "danger"}>{t.status}</Badge>
+      ),
+    },
+    {
+      key: "users", header: "Users",
+      render: () => "\u2014",
+    },
+    {
+      key: "actions", header: "Actions",
+      render: (t) => (
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            title="Edit"
+            onClick={() => openEdit(t)}
+            style={iconBtnStyle}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#F3F4F6"; e.currentTarget.style.borderColor = "#9CA3AF"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.borderColor = "#D1D5DB"; }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d={iconEdit} /></svg>
+          </button>
+          <button
+            title="Delete"
+            onClick={() => setDeleteTarget(t)}
+            style={iconBtnStyle}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#FEF2F2"; e.currentTarget.style.color = "#EF4444"; e.currentTarget.style.borderColor = "#FECACA"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.color = "#6B7280"; e.currentTarget.style.borderColor = "#D1D5DB"; }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d={iconDelete} /></svg>
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div>
-      <div style={headerRow}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>Tenants</h1>
-        <button onClick={openCreate} style={primaryBtn}>+ New Tenant</button>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: "#111", margin: 0 }}>Tenant Management</h1>
+        <Button onClick={openCreate}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Add Tenant
+        </Button>
       </div>
 
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {deleteError && <p style={{ color: "red" }}>{deleteError}</p>}
+      <SearchBar
+        value={search}
+        onChange={setSearch}
+        placeholder="Search tenants by name, domain, or contact..."
+      />
 
-      {!loading && !error && (
-        <div style={tableWrap}>
-          <table style={table}>
-            <thead>
-              <tr style={headerRowBg}>
-                <th style={th}>Name</th>
-                <th style={th}>Domains</th>
-                <th style={th}>Status</th>
-                <th style={th}>Created</th>
-                <th style={th}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tenants.length === 0 && (
-                <tr><td colSpan={5} style={emptyState}>No tenants found.</td></tr>
-              )}
-              {tenants.map((tenant) => (
-                <tr key={tenant.id} style={rowBorder}>
-                  <td style={td}>{tenant.name}</td>
-                  <td style={td}>{(tenant.domains ?? []).join(", ") || "—"}</td>
-                  <td style={td}>
-                    <span style={{ color: tenant.status === "active" ? "#2e7d32" : "#d32f2f" }}>
-                      {tenant.status}
-                    </span>
-                  </td>
-                  <td style={td}>{new Date(tenant.createdAt).toLocaleDateString()}</td>
-                  <td style={td}>
-                    <button onClick={() => openEdit(tenant)} style={actionBtn}>Edit</button>
-                    <button onClick={() => setDeleteTarget(tenant)} style={actionDangerBtn}>Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        data={filteredTenants}
+        loading={loading}
+        error={error}
+        emptyMessage="No tenants found."
+        keyExtractor={(t) => t.id}
+      />
+
+      {deleteError && <p style={{ color: "#DC2626", fontSize: 14, marginTop: 8 }}>{deleteError}</p>}
 
       <TenantFormModal
         open={modalOpen}
@@ -119,42 +164,10 @@ export function TenantList() {
   );
 }
 
-const headerRow: React.CSSProperties = {
-  display: "flex", justifyContent: "space-between", alignItems: "center",
-  marginBottom: 20,
-};
-const primaryBtn: React.CSSProperties = {
-  padding: "10px 20px", background: "#1976d2", color: "#fff",
-  border: "none", borderRadius: 6, cursor: "pointer", fontSize: 14,
-  fontWeight: 500,
-};
-const tableWrap: React.CSSProperties = {
-  overflowX: "auto", borderRadius: 8, border: "1px solid #e0e0e0",
-};
-const table: React.CSSProperties = {
-  width: "100%", borderCollapse: "collapse", fontSize: 14,
-};
-const headerRowBg: React.CSSProperties = {
-  background: "#f5f5f5", textAlign: "left",
-};
-const th: React.CSSProperties = {
-  padding: "12px 16px", fontWeight: 600, borderBottom: "2px solid #e0e0e0",
-  whiteSpace: "nowrap",
-};
-const td: React.CSSProperties = {
-  padding: "12px 16px", borderBottom: "1px solid #e0e0e0",
-};
-const rowBorder: React.CSSProperties = {
-  borderBottom: "1px solid #e0e0e0",
-};
-const emptyState: React.CSSProperties = {
-  padding: 32, textAlign: "center", color: "#666",
-};
-const actionBtn: React.CSSProperties = {
-  marginRight: 8, color: "#1976d2", border: "none",
-  background: "none", cursor: "pointer", fontSize: 13,
-};
-const actionDangerBtn: React.CSSProperties = {
-  color: "#d32f2f", border: "none", background: "none",
-  cursor: "pointer", fontSize: 13,
+const iconBtnStyle: React.CSSProperties = {
+  width: 36, height: 36,
+  border: "1px solid #D1D5DB", background: "#fff",
+  borderRadius: 6, cursor: "pointer",
+  display: "flex", alignItems: "center", justifyContent: "center",
+  color: "#6B7280", transition: "all 0.2s",
 };

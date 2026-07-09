@@ -1,4 +1,6 @@
-export class ApiError extends Error {
+const TOKEN_KEY = "ims_auth_token";
+
+class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
     super(message);
@@ -7,21 +9,34 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
+function getAuthHeaders(): Record<string, string> {
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) return { Authorization: `Bearer ${token}` };
+  } catch { /* localStorage unavailable */ }
+  return {};
+}
+
+async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
+  const { headers: extraHeaders, ...rest } = options ?? {};
   const res = await fetch(url, {
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    ...options,
+    ...rest,
+    headers: { "Content-Type": "application/json", ...getAuthHeaders(), ...extraHeaders },
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
     throw new ApiError(body.error ?? res.statusText, res.status);
   }
   if (res.status === 204) return undefined as T;
-  return res.json();
+  const body = await res.json();
+  if (body && typeof body === "object" && "success" in body && body.success === true && "data" in body) {
+    return body.data as T;
+  }
+  return body as T;
 }
 
-export function apiGet<T>(url: string, signal?: AbortSignal) {
-  return apiFetch<T>(url, { signal });
+export function apiGet<T>(url: string, options?: RequestInit) {
+  return apiFetch<T>(url, { method: "GET", ...options });
 }
 
 export function apiPost<T>(url: string, data?: unknown) {

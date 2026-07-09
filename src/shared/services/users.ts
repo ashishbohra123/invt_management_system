@@ -9,10 +9,8 @@ export const usersService = {
     if (params?.pageSize) query.set("pageSize", String(params.pageSize));
     if (params?.search) query.set("search", params.search);
     const qs = query.toString();
-    return apiGet<UserListResponse>(`${API_PATHS.USERS}${qs ? `?${qs}` : ""}`, signal);
+    return apiGet<UserListResponse>(`${API_PATHS.USERS}${qs ? `?${qs}` : ""}`, { signal });
   },
-
-  get: (id: string) => apiGet<User>(`${API_PATHS.USERS}/${id}`),
 
   create: (data: CreateUserInput) => apiPost<User>(API_PATHS.USERS, data),
 

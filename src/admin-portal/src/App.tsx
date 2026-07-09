@@ -1,43 +1,30 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider, ProtectedRoute, LoginPage, RegisterPage, PortalSelectionPage } from "@moc/shared";
 import { UserList } from "./pages/Users/index.js";
 import { TenantList } from "./pages/Tenants/index.js";
-
-const navLinkStyle = (isActive: boolean): React.CSSProperties => ({
-  color: isActive ? "#ffeb3b" : "#fff",
-  textDecoration: "none",
-  fontSize: 14,
-  fontWeight: isActive ? 600 : 400,
-});
-
-function Layout({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ minHeight: "100vh", background: "#fafafa" }}>
-      <nav style={{
-        background: "#1976d2", padding: "12px 24px",
-        display: "flex", gap: 24, alignItems: "center",
-        flexWrap: "wrap",
-      }}>
-        <Link to="/" style={{ color: "#fff", textDecoration: "none", fontWeight: 700, fontSize: 18 }}>
-          Admin Portal
-        </Link>
-        <Link to="/users" style={{ color: "#fff", textDecoration: "none" }}>Users</Link>
-        <Link to="/tenants" style={{ color: "#fff", textDecoration: "none" }}>Tenants</Link>
-        <Link to="/products" style={{ color: "#fff", textDecoration: "none" }}>Products</Link>
-        <Link to="/orders" style={{ color: "#fff", textDecoration: "none" }}>Orders</Link>
-      </nav>
-      <main style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>{children}</main>
-    </div>
-  );
-}
+import { PageLayout } from "./components/PageLayout";
 
 export function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout><h1>Dashboard</h1><p>Welcome to the admin portal.</p></Layout>} />
-        <Route path="/users" element={<Layout><UserList /></Layout>} />
-        <Route path="/tenants" element={<Layout><TenantList /></Layout>} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/admin/login" element={<LoginPage portalTitle="Admin Portal" registerPath="/admin/register" portalSelectPath="/admin/portal-select" />} />
+          <Route path="/admin/register" element={<RegisterPage portalTitle="Admin Portal" loginPath="/admin/login" portalSelectPath="/admin/portal-select" />} />
+          <Route path="/admin/portal-select" element={<ProtectedRoute portalType="admin" />}>
+            <Route index element={<PortalSelectionPage />} />
+          </Route>
+          <Route element={<ProtectedRoute portalType="admin" />}>
+            <Route path="/" element={<PageLayout><h1 style={pageTitleStyle}>Dashboard</h1><p>Welcome to the admin portal.</p></PageLayout>} />
+            <Route path="/users" element={<PageLayout crumbs={[{ label: "Admin Portal" }, { label: "User Management" }]}><UserList /></PageLayout>} />
+            <Route path="/tenants" element={<PageLayout crumbs={[{ label: "Admin Portal" }, { label: "Tenant Management" }]}><TenantList /></PageLayout>} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
+
+const pageTitleStyle: React.CSSProperties = {
+  fontSize: 24, fontWeight: 600, color: "#111", margin: 0,
+};
