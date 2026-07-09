@@ -94,17 +94,18 @@ test.describe("User Management CRUD - Phase 3", () => {
   test("TC-USR-05: Form validation - empty email shows error", async ({ page }) => {
     await openCreateModal(page);
     const dialog = page.getByRole("dialog");
-    await dialog.getByLabel(/name/i).fill("Test User");
+    await dialog.locator('input[type="text"], input:not([type])').first().fill("Test User");
     await dialog.getByRole("button", { name: /create user/i }).click();
     await expect(dialog.getByText("Email is required")).toBeVisible({ timeout: 5000 });
     await closeModal(page);
   });
 
   test("TC-USR-06: Form validation - invalid email format", async ({ page }) => {
+    await navigateToUsers(page);
     await openCreateModal(page);
     const dialog = page.getByRole("dialog");
-    await dialog.getByLabel(/name/i).fill("Test User");
-    await dialog.getByLabel(/email/i).fill("not-an-email");
+    await dialog.locator('input[type="text"], input:not([type])').first().fill("Test User");
+    await dialog.locator('input[type="email"]').fill("not-an-email");
     await dialog.getByRole("button", { name: /create user/i }).click();
     await expect(dialog.getByText("Invalid email format")).toBeVisible({ timeout: 5000 });
     await closeModal(page);
@@ -113,8 +114,8 @@ test.describe("User Management CRUD - Phase 3", () => {
   test("TC-USR-07: Form validation - short password", async ({ page }) => {
     await openCreateModal(page);
     const dialog = page.getByRole("dialog");
-    await dialog.getByLabel(/name/i).fill("Test User");
-    await dialog.getByLabel(/email/i).fill("valid@example.com");
+    await dialog.locator('input[type="text"], input:not([type])').first().fill("Test User");
+    await dialog.locator('input[type="email"]').fill("valid@example.com");
     const passwordInput = dialog.locator('input[type="password"]');
     await passwordInput.fill("ab");
     await dialog.getByRole("button", { name: /create user/i }).click();
@@ -186,7 +187,7 @@ test.describe("User Management CRUD - Phase 3", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible({ timeout: 5000 });
     await expect(dialog).toContainText("Edit User");
-    const nameInput = dialog.getByLabel(/name/i);
+    const nameInput = dialog.locator('input[type="text"], input:not([type])').first();
     await expect(nameInput).toHaveValue("Edit Prep User");
     await closeModal(page);
   });
