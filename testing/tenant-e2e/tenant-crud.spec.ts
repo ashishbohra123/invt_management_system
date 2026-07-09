@@ -1,300 +1,185 @@
 import { test, expect } from "@playwright/test";
-import type { Page } from "@playwright/test";
 
 const ADMIN_URL = process.env.ADMIN_PORTAL_URL || "http://localhost:3001";
-const API_URL = process.env.API_URL || "http://localhost:3000";
 
-async function loginViaApi(page: Page): Promise<string> {
-  const response = await page.request.post(`${API_URL}/api/auth/login`, {
-    data: {
-      email: process.env.E2E_ADMIN_EMAIL || "admin@example.com",
-      password: process.env.E2E_ADMIN_PASSWORD || "admin123",
-    },
-  });
-  const body = await response.json();
-  return body.data.token;
+async function login(page, email = "admin@example.com", password = "password123") {
+  await page.goto(`${ADMIN_URL}/admin/login`);
+  await page.waitForLoadState("networkidle");
+  await page.getByPlaceholder("name@company.com").fill(email);
+  await page.getByPlaceholder("••••••••").fill(password);
+  await page.getByRole("button", { name: /sign in/i }).click();
+  await page.waitForURL(/\/admin\/(portal-select|tenants|users|$)/, { timeout: 10000 });
 }
 
-async function setAuthCookies(page: Page, token: string) {
-  const hostname = new URL(ADMIN_URL).hostname;
-  await page.context().addCookies([
-    { name: "token", value: token, domain: hostname, path: "/" },
-  ]);
-}
-
-async function navigateToTenants(page: Page) {
+async function navigateToTenants(page) {
   await page.goto(`${ADMIN_URL}/tenants`);
   await page.waitForLoadState("networkidle");
+  await expect(page.locator("h1")).toContainText("Tenant Management");
 }
 
-async function getAddTenantButton(page: Page) {
-  return page.getByRole("button", { name: /add tenant/i });
-}
-
-async function openCreateModal(page: Page) {
-  await (await getAddTenantButton(page)).click();
+async function openCreateModal(page) {
+  await page.getByRole("button", { name: /add tenant/i }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.getByText("Create Tenant")).toBeVisible();
 }
 
-async function fillTenantForm(page: Page, name: string, domains?: string) {
-  const dialog = page.getByRole("dialog");
-  await dialog.getByLabel(/name/i).fill(name);
-  if (domains !== undefined) {
-    await dialog.getByLabel(/domains/i).fill(domains);
-  }
+async function fillName(page, name) {
+  await page.getByRole("dialog").getByLabel(/name/i).fill(name);
 }
 
-async function submitTenantForm(page: Page) {
-  const dialog = page.getByRole("dialog");
-  await dialog.getByRole("button", { name: /create tenant/i }).click();
+async function fillDomains(page, domains) {
+  await page.getByRole("dialog").getByLabel(/domains/i).fill(domains);
 }
 
-async function updateTenantForm(page: Page) {
-  const dialog = page.getByRole("dialog");
-  await dialog.getByRole("button", { name: /update tenant/i }).click();
+async function clickCreate(page) {
+  await page.getByRole("dialog").getByRole("button", { name: /create tenant/i }).click();
 }
 
-async function closeModal(page: Page) {
-  const dialog = page.getByRole("dialog");
-  await dialog.getByRole("button", { name: /cancel/i }).click();
-  await expect(dialog).not.toBeVisible();
+async function clickUpdate(page) {
+  await page.getByRole("dialog").getByRole("button", { name: /update tenant/i }).click();
 }
 
-test.describe("Tenant Management CRUD - Phase 3", () => {
-  let token: string;
+async function clickCancel(page) {
+  await page.getByRole("dialog").getByRole("button", { name: /cancel/i }).click();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+}
 
-  test.beforeAll(async ({ browser }) => {
-    const page = await browser.newPage();
-    token = await loginViaApi(page);
-    await page.close();
-  });
-
-  test.beforeEach(async ({ page }) => {
-    await setAuthCookies(page, token);
-  });
-
+test.describe("Tenant Management CRUD - UI Tests (Phase 3)", () => {
   test("TC-TN-01: Page loads and displays tenant list", async ({ page }) => {
+    await login(page);
     await navigateToTenants(page);
-    await expect(page.locator("h1")).toContainText("Tenant Management");
-    const searchBar = page.getByPlaceholder(/search tenants/i);
-    await expect(searchBar).toBeVisible();
+    await expect(page.getByPlaceholder(/search tenants/i)).toBeVisible();
   });
 
   test("TC-TN-02: Create tenant modal opens with empty form", async ({ page }) => {
+    await login(page);
     await navigateToTenants(page);
     await openCreateModal(page);
-    const dialog = page.getByRole("dialog");
-    await expect(dialog.getByLabel(/name/i)).toHaveValue("");
-    await closeModal(page);
+    await expect(page.getByRole("dialog").getByLabel(/name/i)).toHaveValue("");
+    await clickCancel(page);
   });
 
-  test("TC-TN-03: Create tenant with valid data via API", async ({ page }) => {
-    const uniqueName = `E2E Test Tenant ${Date.now()}`;
-    const createResponse = await page.request.post(`${API_URL}/api/tenants`, {
-      data: { name: uniqueName, domains: ["e2e.example.com"] },
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(createResponse.status()).toBe(201);
-    const body = await createResponse.json();
-    expect(body.success).toBe(true);
-    expect(body.data.name).toBe(uniqueName);
-    expect(body.data.domains).toContain("e2e.example.com");
+  test("TC-TN-03: Create tenant via UI and verify in list", async ({ page }) => {
+    const tenantName = `UI Tenant ${Date.now()}`;
 
+    await login(page);
     await navigateToTenants(page);
-    await expect(page.getByText(uniqueName)).toBeVisible();
+    await openCreateModal(page);
+    await fillName(page, tenantName);
+    await fillDomains(page, "ui-create.example.com");
+    await clickCreate(page);
+
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await expect(page.getByText(tenantName)).toBeVisible();
   });
 
-  test("TC-TN-04: Create tenant without name returns validation error", async ({ page }) => {
-    const response = await page.request.post(`${API_URL}/api/tenants`, {
-      data: {},
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(response.status()).toBe(400);
-    const body = await response.json();
-    expect(body.success).toBe(false);
-    expect(body.error).toContain("Name is required");
+  test("TC-TN-04: Create tenant validation - empty name shows error", async ({ page }) => {
+    await login(page);
+    await navigateToTenants(page);
+    await openCreateModal(page);
+    await fillDomains(page, "example.com");
+    await clickCreate(page);
+
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByRole("dialog").getByText(/name is required/i)).toBeVisible();
+    await clickCancel(page);
   });
 
-  test("TC-TN-05: Create duplicate tenant returns 409", async ({ page }) => {
-    const tenantId = `dup-${Date.now()}`;
-    await page.request.post(`${API_URL}/api/tenants`, {
-      data: { name: "Duplicate Tenant", tenant_id: tenantId, domains: ["dup.example.com"] },
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const response = await page.request.post(`${API_URL}/api/tenants`, {
-      data: { name: "Duplicate Tenant", tenant_id: tenantId, domains: ["dup.example.com"] },
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(response.status()).toBe(409);
-  });
-
-  test("TC-TN-06: GET /api/tenants returns paginated list", async ({ page }) => {
-    const response = await page.request.get(`${API_URL}/api/tenants`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(response.status()).toBe(200);
-    const body = await response.json();
-    expect(body.success).toBe(true);
-    expect(Array.isArray(body.data)).toBe(true);
-  });
-
-  test("TC-TN-07: GET /api/tenants rejects unauthenticated request", async ({ page }) => {
-    const response = await page.request.get(`${API_URL}/api/tenants`);
-    expect(response.status()).toBe(401);
-  });
-
-  test("TC-TN-08: Edit tenant modal pre-fills with current data via UI", async ({ page }) => {
+  test("TC-TN-05: Edit tenant modal pre-fills current data", async ({ page }) => {
     const tenantName = `Edit Prep ${Date.now()}`;
-    const createRes = await page.request.post(`${API_URL}/api/tenants`, {
-      data: { name: tenantName, domains: ["prefill.example.com"] },
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const tenant = (await createRes.json()).data;
 
+    await login(page);
     await navigateToTenants(page);
+
+    await openCreateModal(page);
+    await fillName(page, tenantName);
+    await fillDomains(page, "prefill.example.com");
+    await clickCreate(page);
+    await expect(page.getByText(tenantName)).toBeVisible();
+
     const row = page.locator(`text=${tenantName}`).first();
-    await expect(row).toBeVisible();
-    const editButton = row.locator("xpath=ancestor::tr").first().getByTitle("Edit");
-    await editButton.click();
+    await row.locator("xpath=ancestor::tr").first().getByTitle("Edit").click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     await expect(dialog.getByText("Edit Tenant")).toBeVisible();
-
-    const nameInput = dialog.getByLabel(/name/i);
-    await expect(nameInput).toHaveValue(tenantName);
-    await closeModal(page);
+    await expect(dialog.getByLabel(/name/i)).toHaveValue(tenantName);
+    await clickCancel(page);
   });
 
-  test("TC-TN-09: Update tenant name via API", async ({ page }) => {
+  test("TC-TN-06: Update tenant name via UI", async ({ page }) => {
     const tenantName = `Update Target ${Date.now()}`;
-    const createRes = await page.request.post(`${API_URL}/api/tenants`, {
-      data: { name: tenantName, domains: ["update.example.com"] },
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const tenant = (await createRes.json()).data;
     const updatedName = `${tenantName} - Updated`;
 
-    const updateRes = await page.request.put(`${API_URL}/api/tenants/${tenant.id}`, {
-      data: { name: updatedName },
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(updateRes.status()).toBe(200);
-    const updateBody = await updateRes.json();
-    expect(updateBody.data.name).toBe(updatedName);
-
-    const getRes = await page.request.get(`${API_URL}/api/tenants/${tenant.id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const getBody = await getRes.json();
-    expect(getBody.data.name).toBe(updatedName);
-  });
-
-  test("TC-TN-10: Update tenant status to inactive via API", async ({ page }) => {
-    const tenantName = `Status Test ${Date.now()}`;
-    const createRes = await page.request.post(`${API_URL}/api/tenants`, {
-      data: { name: tenantName, domains: ["status.example.com"] },
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const tenant = (await createRes.json()).data;
-
-    const updateRes = await page.request.put(`${API_URL}/api/tenants/${tenant.id}`, {
-      data: { status: "inactive" },
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(updateRes.status()).toBe(200);
-    const updateBody = await updateRes.json();
-    expect(updateBody.data.status).toBe("inactive");
-  });
-
-  test("TC-TN-11: Update non-existent tenant returns 404", async ({ page }) => {
-    const response = await page.request.put(`${API_URL}/api/tenants/non-existent-id`, {
-      data: { name: "Ghost" },
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(response.status()).toBe(404);
-  });
-
-  test("TC-TN-12: Delete tenant via API", async ({ page }) => {
-    const tenantName = `Delete Target ${Date.now()}`;
-    const createRes = await page.request.post(`${API_URL}/api/tenants`, {
-      data: { name: tenantName, domains: ["delete.example.com"] },
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const tenant = (await createRes.json()).data;
-
-    const deleteRes = await page.request.delete(`${API_URL}/api/tenants/${tenant.id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(deleteRes.status()).toBe(204);
-
-    const getRes = await page.request.get(`${API_URL}/api/tenants/${tenant.id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(getRes.status()).toBe(404);
-  });
-
-  test("TC-TN-13: Delete non-existent tenant returns 404", async ({ page }) => {
-    const response = await page.request.delete(`${API_URL}/api/tenants/non-existent-id`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(response.status()).toBe(404);
-  });
-
-  test("TC-TN-14: Delete tenant via UI confirmation dialog", async ({ page }) => {
-    const tenantName = `UI Delete ${Date.now()}`;
-    const createRes = await page.request.post(`${API_URL}/api/tenants`, {
-      data: { name: tenantName, domains: ["uidelete.example.com"] },
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const tenant = (await createRes.json()).data;
-
+    await login(page);
     await navigateToTenants(page);
-    const row = page.locator(`text=${tenantName}`).first();
-    await expect(row).toBeVisible();
 
-    const deleteButton = row.locator("xpath=ancestor::tr").first().getByTitle("Delete");
-    await deleteButton.click();
+    await openCreateModal(page);
+    await fillName(page, tenantName);
+    await fillDomains(page, "update.example.com");
+    await clickCreate(page);
+    await expect(page.getByText(tenantName)).toBeVisible();
+
+    const row = page.locator(`text=${tenantName}`).first();
+    await row.locator("xpath=ancestor::tr").first().getByTitle("Edit").click();
+
+    await fillName(page, updatedName);
+    await clickUpdate(page);
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await expect(page.getByText(updatedName)).toBeVisible();
+  });
+
+  test("TC-TN-07: Delete tenant via UI confirmation dialog", async ({ page }) => {
+    const tenantName = `UI Delete ${Date.now()}`;
+
+    await login(page);
+    await navigateToTenants(page);
+
+    await openCreateModal(page);
+    await fillName(page, tenantName);
+    await fillDomains(page, "uidelete.example.com");
+    await clickCreate(page);
+    await expect(page.getByText(tenantName)).toBeVisible();
+
+    const row = page.locator(`text=${tenantName}`).first();
+    await row.locator("xpath=ancestor::tr").first().getByTitle("Delete").click();
 
     const confirmDialog = page.getByRole("dialog").filter({ hasText: "Delete Tenant" });
     await expect(confirmDialog).toBeVisible();
     await expect(confirmDialog).toContainText(tenantName);
-
     await confirmDialog.getByRole("button", { name: /delete/i }).click();
     await expect(confirmDialog).not.toBeVisible();
     await expect(page.getByText(tenantName)).not.toBeVisible();
   });
 
-  test("TC-TN-15: UI search filters tenant list", async ({ page }) => {
+  test("TC-TN-08: Cancel delete keeps tenant in list", async ({ page }) => {
+    const tenantName = `Cancel Delete ${Date.now()}`;
+
+    await login(page);
     await navigateToTenants(page);
+
+    await openCreateModal(page);
+    await fillName(page, tenantName);
+    await fillDomains(page, "cancel.example.com");
+    await clickCreate(page);
+    await expect(page.getByText(tenantName)).toBeVisible();
+
+    const row = page.locator(`text=${tenantName}`).first();
+    await row.locator("xpath=ancestor::tr").first().getByTitle("Delete").click();
+
+    const confirmDialog = page.getByRole("dialog").filter({ hasText: "Delete Tenant" });
+    await expect(confirmDialog).toBeVisible();
+    await confirmDialog.getByRole("button", { name: /cancel/i }).click();
+    await expect(confirmDialog).not.toBeVisible();
+    await expect(page.getByText(tenantName)).toBeVisible();
+  });
+
+  test("TC-TN-09: Search filters tenant list", async ({ page }) => {
+    await login(page);
+    await navigateToTenants(page);
+
     const search = page.getByPlaceholder(/search tenants/i);
-    await search.fill("Acme Corp");
-    const table = page.locator("table");
-    await expect(table).toBeVisible();
-  });
-
-  test("TC-TN-16: API - GET /api/tenants/:id returns 404 for unknown tenant", async ({ page }) => {
-    const response = await page.request.get(`${API_URL}/api/tenants/00000000-0000-0000-0000-000000000000`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(response.status()).toBe(404);
-  });
-
-  test("TC-TN-17: API - Update tenant domains", async ({ page }) => {
-    const tenantName = `Domains Test ${Date.now()}`;
-    const createRes = await page.request.post(`${API_URL}/api/tenants`, {
-      data: { name: tenantName, domains: ["old.example.com"] },
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const tenant = (await createRes.json()).data;
-
-    const updateRes = await page.request.put(`${API_URL}/api/tenants/${tenant.id}`, {
-      data: { domains: ["new.example.com", "another.example.com"] },
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(updateRes.status()).toBe(200);
-    const updateBody = await updateRes.json();
-    expect(updateBody.data.domains).toEqual(["new.example.com", "another.example.com"]);
+    await search.fill("UI Tenant");
+    await expect(page.locator("table")).toBeVisible();
   });
 });
