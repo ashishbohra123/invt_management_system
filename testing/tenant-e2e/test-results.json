@@ -1,278 +1,35 @@
 {
-  "config": {
-    "argv": [
-      "/usr/local/bin/node",
-      "/paperclip/moc-app/node_modules/.bin/playwright",
-      "test",
-      "--list",
-      "--config=testing/tenant-e2e/playwright.config.ts"
-    ],
-    "configFile": "/paperclip/moc-app/testing/tenant-e2e/playwright.config.ts",
-    "rootDir": "/paperclip/moc-app/testing/tenant-e2e",
-    "failOnFlakyTests": false,
-    "forbidOnly": false,
-    "fullyParallel": false,
-    "globalSetup": null,
-    "globalTeardown": null,
-    "globalTimeout": 0,
-    "grep": {},
-    "grepInvert": null,
-    "maxFailures": 0,
-    "metadata": {},
-    "preserveOutput": "always",
-    "projects": [
-      {
-        "outputDir": "/paperclip/moc-app/test-results",
-        "repeatEach": 1,
-        "retries": 0,
-        "metadata": {},
-        "id": "chromium",
-        "name": "chromium",
-        "testDir": "/paperclip/moc-app/testing/tenant-e2e",
-        "testIgnore": [],
-        "testMatch": [
-          "*.spec.ts"
-        ],
-        "timeout": 30000
-      }
-    ],
-    "quiet": false,
-    "reporter": [
-      [
-        "html",
-        {
-          "outputFolder": "playwright-report"
-        }
-      ],
-      [
-        "json",
-        {
-          "outputFile": "test-results.json"
-        }
-      ],
-      [
-        "list",
-        null
-      ]
-    ],
-    "reportSlowTests": {
-      "max": 5,
-      "threshold": 300000
-    },
-    "shard": null,
-    "tags": [],
-    "updateSnapshots": "missing",
-    "updateSourceMethod": "patch",
-    "version": "1.61.1",
-    "workers": 1,
-    "webServer": null
+  "testSuite": "Tenant Management CRUD E2E Tests (MOC-152 Phase 3) - UI Only",
+  "date": "2026-07-09",
+  "tester": "QA Automation Engineer",
+  "framework": "Playwright 1.61.1",
+  "testFile": "tenant-crud.spec.ts",
+  "totalTests": 9,
+  "executed": 0,
+  "passed": 0,
+  "failed": 0,
+  "blocked": 9,
+  "environmentStatus": {
+    "apiServer": "NOT_RUNNING",
+    "adminPortal": "NOT_RUNNING",
+    "postgresql": "NOT_AVAILABLE",
+    "playwrightBrowsers": "MISSING_SYSTEM_DEPS"
   },
-  "suites": [
-    {
-      "title": "tenant-crud.spec.ts",
-      "file": "tenant-crud.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "Tenant Management CRUD - UI Tests (Phase 3)",
-          "file": "tenant-crud.spec.ts",
-          "line": 47,
-          "column": 6,
-          "specs": [
-            {
-              "title": "TC-TN-01: Page loads and displays tenant list",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "e94e73e4616057cf62c1-9bdd967846d126e897ca",
-              "file": "tenant-crud.spec.ts",
-              "line": 48,
-              "column": 7
-            },
-            {
-              "title": "TC-TN-02: Create tenant modal opens with empty form",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "e94e73e4616057cf62c1-23c2b15273aba88acc10",
-              "file": "tenant-crud.spec.ts",
-              "line": 54,
-              "column": 7
-            },
-            {
-              "title": "TC-TN-03: Create tenant via UI and verify in list",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "e94e73e4616057cf62c1-187d4c2511cced8f3f5f",
-              "file": "tenant-crud.spec.ts",
-              "line": 62,
-              "column": 7
-            },
-            {
-              "title": "TC-TN-04: Create tenant validation - empty name shows error",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "e94e73e4616057cf62c1-3c7fe38b66ba334d7d45",
-              "file": "tenant-crud.spec.ts",
-              "line": 76,
-              "column": 7
-            },
-            {
-              "title": "TC-TN-05: Edit tenant modal pre-fills current data",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "e94e73e4616057cf62c1-1bf38c90aae0447fb913",
-              "file": "tenant-crud.spec.ts",
-              "line": 88,
-              "column": 7
-            },
-            {
-              "title": "TC-TN-06: Update tenant name via UI",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "e94e73e4616057cf62c1-d8ecba8a77ebcc91956a",
-              "file": "tenant-crud.spec.ts",
-              "line": 110,
-              "column": 7
-            },
-            {
-              "title": "TC-TN-07: Delete tenant via UI confirmation dialog",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "e94e73e4616057cf62c1-0fb004dea0712db9d610",
-              "file": "tenant-crud.spec.ts",
-              "line": 132,
-              "column": 7
-            },
-            {
-              "title": "TC-TN-08: Cancel delete keeps tenant in list",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "e94e73e4616057cf62c1-46b9877a97fa9f60168e",
-              "file": "tenant-crud.spec.ts",
-              "line": 155,
-              "column": 7
-            },
-            {
-              "title": "TC-TN-09: Search filters tenant list",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "e94e73e4616057cf62c1-d67ee414375b46c6e2a1",
-              "file": "tenant-crud.spec.ts",
-              "line": 177,
-              "column": 7
-            }
-          ]
-        }
-      ]
-    }
+  "blockers": [
+    "PostgreSQL 16 not running - application API server cannot start",
+    "Missing system libraries for Playwright Chromium (libglib-2.0.so.0) - cannot launch headless browser",
+    "No root access to install system dependencies"
   ],
-  "errors": [],
-  "stats": {
-    "startTime": "2026-07-09T07:27:42.560Z",
-    "duration": 226.65100000000007,
-    "expected": 0,
-    "skipped": 9,
-    "unexpected": 0,
-    "flaky": 0
-  }
+  "notes": "All tests are UI-only using the admin portal (port 3001). Uses auth.setup.ts for browser-based login via /admin/login with admin@example.com / password123. Follows same patterns as MOC-151 user-e2e tests (setup project with storageState, consistent timeouts, reload+wait patterns). Automated execution requires running PostgreSQL + Express API + Admin Portal stack.",
+  "testCases": [
+    { "id": "TC-TN-01", "name": "Page loads and displays tenant list", "status": "BLOCKED", "expected": "Tenant Management heading + search bar visible" },
+    { "id": "TC-TN-02", "name": "Create tenant modal opens with empty form", "status": "BLOCKED", "expected": "Modal with empty name field" },
+    { "id": "TC-TN-03", "name": "Create tenant via UI and verify in list", "status": "BLOCKED", "expected": "New tenant appears in table after reload" },
+    { "id": "TC-TN-04", "name": "Create tenant validation - empty name shows error", "status": "BLOCKED", "expected": "Name is required error in modal" },
+    { "id": "TC-TN-05", "name": "Edit tenant modal pre-fills current data", "status": "BLOCKED", "expected": "Edit modal with pre-filled name field" },
+    { "id": "TC-TN-06", "name": "Update tenant name via UI", "status": "BLOCKED", "expected": "Updated name visible in table" },
+    { "id": "TC-TN-07", "name": "Delete tenant via UI confirmation dialog", "status": "BLOCKED", "expected": "Delete dialog with tenant name + tenant removed" },
+    { "id": "TC-TN-08", "name": "Cancel delete keeps tenant in list", "status": "BLOCKED", "expected": "Tenant remains visible after cancel" },
+    { "id": "TC-TN-09", "name": "Search filters tenant list", "status": "BLOCKED", "expected": "Table filters by search term" }
+  ]
 }
