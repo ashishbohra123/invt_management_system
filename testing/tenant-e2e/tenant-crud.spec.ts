@@ -39,6 +39,14 @@ async function closeModal(page) {
   await expect(dialog).not.toBeVisible({ timeout: 5000 });
 }
 
+function dialogNameInput(page) {
+  return page.getByRole("dialog").locator("input").first();
+}
+
+function dialogDomainsInput(page) {
+  return page.getByRole("dialog").locator('input[placeholder*="example"]');
+}
+
 test.describe("Tenant Management CRUD - UI Tests (Phase 3)", () => {
   test("TC-TN-01: Page loads and displays tenant list", async ({ page }) => {
     await navigateToTenants(page);
@@ -51,7 +59,7 @@ test.describe("Tenant Management CRUD - UI Tests (Phase 3)", () => {
   test("TC-TN-02: Create tenant modal opens with empty form", async ({ page }) => {
     await navigateToTenants(page);
     await openCreateModal(page);
-    await expect(page.getByRole("dialog").getByLabel(/name/i)).toHaveValue("");
+    await expect(page.getByRole("dialog").locator("input").first()).toHaveValue("");
     await closeModal(page);
   });
 
@@ -60,8 +68,8 @@ test.describe("Tenant Management CRUD - UI Tests (Phase 3)", () => {
 
     await navigateToTenants(page);
     await openCreateModal(page);
-    await page.getByRole("dialog").getByLabel(/name/i).fill(tenantName);
-    await page.getByRole("dialog").getByLabel(/domains/i).fill("ui-create.example.com");
+    await dialogNameInput(page).fill(tenantName);
+    await dialogDomainsInput(page).fill("ui-create.example.com");
     await page.getByRole("dialog").getByRole("button", { name: /create tenant/i }).click();
 
     await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5000 });
@@ -75,7 +83,7 @@ test.describe("Tenant Management CRUD - UI Tests (Phase 3)", () => {
     await navigateToTenants(page);
     await openCreateModal(page);
     const dialog = page.getByRole("dialog");
-    await dialog.getByLabel(/domains/i).fill("example.com");
+    await dialogDomainsInput(page).fill("example.com");
     await dialog.getByRole("button", { name: /create tenant/i }).click();
     await expect(dialog).toBeVisible({ timeout: 5000 });
     await expect(dialog.getByText(/name is required/i)).toBeVisible({ timeout: 5000 });
@@ -87,8 +95,8 @@ test.describe("Tenant Management CRUD - UI Tests (Phase 3)", () => {
 
     await navigateToTenants(page);
     await openCreateModal(page);
-    await page.getByRole("dialog").getByLabel(/name/i).fill(tenantName);
-    await page.getByRole("dialog").getByLabel(/domains/i).fill("prefill.example.com");
+    await dialogNameInput(page).fill(tenantName);
+    await dialogDomainsInput(page).fill("prefill.example.com");
     await page.getByRole("dialog").getByRole("button", { name: /create tenant/i }).click();
     await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5000 });
     await page.reload();
@@ -96,7 +104,7 @@ test.describe("Tenant Management CRUD - UI Tests (Phase 3)", () => {
     await page.waitForTimeout(1500);
 
     await openEditModal(page, tenantName);
-    const nameInput = page.getByRole("dialog").getByLabel(/name/i);
+    const nameInput = page.getByRole("dialog").locator("input").first();
     await expect(nameInput).toHaveValue(tenantName);
     await closeModal(page);
   });
@@ -107,8 +115,8 @@ test.describe("Tenant Management CRUD - UI Tests (Phase 3)", () => {
 
     await navigateToTenants(page);
     await openCreateModal(page);
-    await page.getByRole("dialog").getByLabel(/name/i).fill(tenantName);
-    await page.getByRole("dialog").getByLabel(/domains/i).fill("update.example.com");
+    await dialogNameInput(page).fill(tenantName);
+    await dialogDomainsInput(page).fill("update.example.com");
     await page.getByRole("dialog").getByRole("button", { name: /create tenant/i }).click();
     await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5000 });
     await page.reload();
@@ -116,7 +124,7 @@ test.describe("Tenant Management CRUD - UI Tests (Phase 3)", () => {
     await page.waitForTimeout(1500);
 
     await openEditModal(page, tenantName);
-    await page.getByRole("dialog").getByLabel(/name/i).fill(updatedName);
+    await page.getByRole("dialog").locator("input").first().fill(updatedName);
     await page.getByRole("dialog").getByRole("button", { name: /update tenant/i }).click();
     await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5000 });
     await page.waitForTimeout(1000);
@@ -128,8 +136,8 @@ test.describe("Tenant Management CRUD - UI Tests (Phase 3)", () => {
 
     await navigateToTenants(page);
     await openCreateModal(page);
-    await page.getByRole("dialog").getByLabel(/name/i).fill(tenantName);
-    await page.getByRole("dialog").getByLabel(/domains/i).fill("uidelete.example.com");
+    await dialogNameInput(page).fill(tenantName);
+    await dialogDomainsInput(page).fill("uidelete.example.com");
     await page.getByRole("dialog").getByRole("button", { name: /create tenant/i }).click();
     await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5000 });
     await page.reload();
@@ -151,8 +159,8 @@ test.describe("Tenant Management CRUD - UI Tests (Phase 3)", () => {
 
     await navigateToTenants(page);
     await openCreateModal(page);
-    await page.getByRole("dialog").getByLabel(/name/i).fill(tenantName);
-    await page.getByRole("dialog").getByLabel(/domains/i).fill("cancel.example.com");
+    await dialogNameInput(page).fill(tenantName);
+    await dialogDomainsInput(page).fill("cancel.example.com");
     await page.getByRole("dialog").getByRole("button", { name: /create tenant/i }).click();
     await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5000 });
     await page.reload();
