@@ -11,7 +11,7 @@ async function loginViaApi(page: Page): Promise<string> {
     data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
   });
   const body = await response.json();
-  return body.data.token;
+  return body.token;
 }
 
 async function navigateToUsers(page: Page) {
@@ -78,8 +78,7 @@ test.describe("User Management CRUD - Phase 3", () => {
     });
     expect(createResponse.status()).toBe(201);
     const body = await createResponse.json();
-    expect(body.success).toBe(true);
-    expect(body.data.email).toBe(uniqueEmail);
+    expect(body.email).toBe(uniqueEmail);
     await page.reload();
     await page.waitForLoadState("domcontentloaded");
     await page.waitForTimeout(1500);
@@ -159,8 +158,7 @@ test.describe("User Management CRUD - Phase 3", () => {
     });
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.success).toBe(true);
-    expect(Array.isArray(body.data.data)).toBe(true);
+    expect(Array.isArray(body.data)).toBe(true);
   });
 
   test("TC-USR-10: GET /api/users rejects unauthenticated request", async ({ page }) => {
@@ -181,7 +179,7 @@ test.describe("User Management CRUD - Phase 3", () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(createRes.status()).toBe(201);
-    const user = (await createRes.json()).data;
+    const user = await createRes.json();
     await page.reload();
     await page.waitForLoadState("domcontentloaded");
     await page.waitForTimeout(1500);
@@ -209,7 +207,7 @@ test.describe("User Management CRUD - Phase 3", () => {
       },
       headers: { Authorization: `Bearer ${token}` },
     });
-    const user = (await createRes.json()).data;
+    const user = await createRes.json();
     const updatedName = "Update Target - Modified";
     const updateRes = await page.request.put(`${API_URL}/api/users/${user.id}`, {
       data: { name: updatedName },
@@ -217,7 +215,7 @@ test.describe("User Management CRUD - Phase 3", () => {
     });
     expect(updateRes.status()).toBe(200);
     const updateBody = await updateRes.json();
-    expect(updateBody.data.name).toBe(updatedName);
+    expect(updateBody.name).toBe(updatedName);
   });
 
   test("TC-USR-13: Update user role via API", async ({ page }) => {
@@ -232,14 +230,14 @@ test.describe("User Management CRUD - Phase 3", () => {
       },
       headers: { Authorization: `Bearer ${token}` },
     });
-    const user = (await createRes.json()).data;
+    const user = await createRes.json();
     const updateRes = await page.request.put(`${API_URL}/api/users/${user.id}`, {
       data: { role: "admin" },
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(updateRes.status()).toBe(200);
     const updateBody = await updateRes.json();
-    expect(updateBody.data.role).toBe("admin");
+    expect(updateBody.role).toBe("admin");
   });
 
   test("TC-USR-14: Update user active status via API", async ({ page }) => {
@@ -254,14 +252,14 @@ test.describe("User Management CRUD - Phase 3", () => {
       },
       headers: { Authorization: `Bearer ${token}` },
     });
-    const user = (await createRes.json()).data;
+    const user = await createRes.json();
     const updateRes = await page.request.put(`${API_URL}/api/users/${user.id}`, {
       data: { status: "inactive" },
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(updateRes.status()).toBe(200);
     const updateBody = await updateRes.json();
-    expect(updateBody.data.status).toBe("inactive");
+    expect(updateBody.status).toBe("inactive");
   });
 
   test("TC-USR-15: Update non-existent user returns 404", async ({ page }) => {
@@ -284,7 +282,7 @@ test.describe("User Management CRUD - Phase 3", () => {
       },
       headers: { Authorization: `Bearer ${token}` },
     });
-    const user = (await createRes.json()).data;
+    const user = await createRes.json();
     const deleteRes = await page.request.delete(`${API_URL}/api/users/${user.id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -356,8 +354,8 @@ test.describe("User Management CRUD - Phase 3", () => {
     });
     expect(createResponse.status()).toBe(201);
     const body = await createResponse.json();
-    expect(body.data.name).toBe("Full Fields User");
-    expect(body.data.email).toBe(uniqueEmail);
-    expect(body.data.role).toBe("admin");
+    expect(body.name).toBe("Full Fields User");
+    expect(body.email).toBe(uniqueEmail);
+    expect(body.role).toBe("admin");
   });
 });
