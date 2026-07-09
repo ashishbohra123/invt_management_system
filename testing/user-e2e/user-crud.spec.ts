@@ -5,7 +5,6 @@ const ADMIN_URL = process.env.ADMIN_PORTAL_URL || "http://localhost:3001";
 const API_URL = process.env.API_URL || "http://localhost:3000";
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL || "admin@example.com";
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD || "password123";
-const AUTH_FILE = "playwright/.auth/user.json";
 
 async function loginViaApi(page: Page): Promise<string> {
   const response = await page.request.post(`${API_URL}/api/auth/login`, {
@@ -15,21 +14,10 @@ async function loginViaApi(page: Page): Promise<string> {
   return body.data.token;
 }
 
-async function seedAuthState(page: Page, token: string) {
-  await page.goto(`${ADMIN_URL}/admin/login`);
-  await page.evaluate(
-    ({ t, u }) => {
-      localStorage.setItem("ims_auth_token", t);
-      localStorage.setItem("ims_auth_user", JSON.stringify(u));
-    },
-    { t: token, u: { email: ADMIN_EMAIL, portalAccess: ["admin"] } },
-  );
-}
-
 async function navigateToUsers(page: Page) {
   await page.goto(`${ADMIN_URL}/users`);
   await page.waitForLoadState("domcontentloaded");
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(1500);
 }
 
 async function openCreateModal(page: Page) {
@@ -50,22 +38,14 @@ test.describe("User Management CRUD - Phase 3", () => {
   test.beforeAll(async ({ browser }) => {
     const page = await browser.newPage();
     token = await loginViaApi(page);
-    await seedAuthState(page, token);
-    await page.context().storageState({ path: AUTH_FILE });
     await page.close();
   });
 
-  test.beforeEach(async ({ page, context }) => {
-    await context.addInitScript(() => {
-      const token = localStorage.getItem("ims_auth_token");
-      if (!token) {
-        localStorage.setItem("ims_auth_token", "__pending__");
-      }
-    });
+  test.beforeEach(async ({ page }) => {
+    await navigateToUsers(page);
   });
 
   test("TC-USR-01: Page loads and displays user list", async ({ page }) => {
-    await navigateToUsers(page);
     await expect(page.locator("h1")).toBeVisible({ timeout: 10000 });
     await expect(page.locator("h1")).toContainText("User Management");
     const searchBar = page.getByPlaceholder(/search users/i);
@@ -73,7 +53,6 @@ test.describe("User Management CRUD - Phase 3", () => {
   });
 
   test("TC-USR-02: Create user modal opens with empty form", async ({ page }) => {
-    await navigateToUsers(page);
     await openCreateModal(page);
     const dialog = page.getByRole("dialog");
     await expect(dialog.locator("input").first()).toBeVisible({ timeout: 5000 });
@@ -96,12 +75,13 @@ test.describe("User Management CRUD - Phase 3", () => {
     const body = await createResponse.json();
     expect(body.success).toBe(true);
     expect(body.data.email).toBe(uniqueEmail);
-    await navigateToUsers(page);
+    await page.reload();
+    await page.waitForLoadState("domcontentloaded");
+    await page.waitForTimeout(1500);
     await expect(page.getByText(uniqueEmail)).toBeVisible({ timeout: 5000 });
   });
 
   test("TC-USR-04: Form validation - empty name shows error", async ({ page }) => {
-    await navigateToUsers(page);
     await openCreateModal(page);
     const dialog = page.getByRole("dialog");
     const emailInput = dialog.locator('input[type="email"]');
@@ -112,18 +92,15 @@ test.describe("User Management CRUD - Phase 3", () => {
   });
 
   test("TC-USR-05: Form validation - empty email shows error", async ({ page }) => {
-    await navigateToUsers(page);
     await openCreateModal(page);
     const dialog = page.getByRole("dialog");
-    const nameInput = dialog.getByLabel(/name/i);
-    await nameInput.fill("Test User");
+    await dialog.getByLabel(/name/i).fill("Test User");
     await dialog.getByRole("button", { name: /create user/i }).click();
     await expect(dialog.getByText("Email is required")).toBeVisible({ timeout: 5000 });
     await closeModal(page);
   });
 
   test("TC-USR-06: Form validation - invalid email format", async ({ page }) => {
-    await navigateToUsers(page);
     await openCreateModal(page);
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel(/name/i).fill("Test User");
@@ -134,7 +111,6 @@ test.describe("User Management CRUD - Phase 3", () => {
   });
 
   test("TC-USR-07: Form validation - short password", async ({ page }) => {
-    await navigateToUsers(page);
     await openCreateModal(page);
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel(/name/i).fill("Test User");
@@ -200,7 +176,9 @@ test.describe("User Management CRUD - Phase 3", () => {
     });
     expect(createRes.status()).toBe(201);
     const user = (await createRes.json()).data;
-    await navigateToUsers(page);
+    await page.reload();
+    await page.waitForLoadState("domcontentloaded");
+    await page.waitForTimeout(1500);
     const row = page.locator(`text=${uniqueEmail}`).first();
     await expect(row).toBeVisible({ timeout: 5000 });
     const editButton = row.locator("xpath=ancestor::tr").first().getByTitle("Edit");
@@ -327,7 +305,9 @@ test.describe("User Management CRUD - Phase 3", () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(createRes.status()).toBe(201);
-    await navigateToUsers(page);
+    await page.reload();
+    await page.waitForLoadState("domcontentloaded");
+    await page.waitForTimeout(1500);
     const row = page.locator(`text=${uniqueEmail}`).first();
     await expect(row).toBeVisible({ timeout: 5000 });
     const deleteButton = row.locator("xpath=ancestor::tr").first().getByTitle("Delete");
@@ -341,7 +321,6 @@ test.describe("User Management CRUD - Phase 3", () => {
   });
 
   test("TC-USR-19: UI search filters user list", async ({ page }) => {
-    await navigateToUsers(page);
     const search = page.getByPlaceholder(/search users/i);
     await search.fill("admin@example.com");
     const table = page.locator("table");
