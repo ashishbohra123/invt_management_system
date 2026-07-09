@@ -10,9 +10,13 @@
     "build": "npm run build -ws --if-present",
     "lint": "npm run lint -ws --if-present",
     "test": "npm run test -ws --if-present",
+    "test:user-e2e": "npx playwright test --config=testing/user-e2e/playwright.config.ts --headed",
+    "test:tenant-e2e": "npx playwright test --config=testing/tenant-e2e/playwright.config.ts  --headed",
+    "test:e2e": "npm run test:user-e2e && npm run test:tenant-e2e  --headed",
     "start": "npm run dev"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.0",
     "@types/supertest": "^7.2.0",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
