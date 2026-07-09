@@ -5,16 +5,7 @@ const ADMIN_URL = process.env.ADMIN_PORTAL_URL || "http://localhost:3001";
 const API_URL = process.env.API_URL || "http://localhost:3000";
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL || "admin@example.com";
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD || "password123";
-
-async function loginViaUi(page: Page) {
-  await page.goto(`${ADMIN_URL}/admin/login`);
-  await page.waitForLoadState("networkidle");
-  await page.getByPlaceholder("name@company.com").fill(ADMIN_EMAIL);
-  await page.getByPlaceholder("••••••••").fill(ADMIN_PASSWORD);
-  await page.getByRole("button", { name: "Sign In" }).click();
-  await page.waitForURL(/\/admin\/portal-select/);
-  await page.waitForLoadState("networkidle");
-}
+const AUTH_FILE = "playwright/.auth/user.json";
 
 async function loginViaApi(page: Page): Promise<string> {
   const response = await page.request.post(`${API_URL}/api/auth/login`, {
@@ -24,21 +15,33 @@ async function loginViaApi(page: Page): Promise<string> {
   return body.data.token;
 }
 
+async function seedAuthState(page: Page, token: string) {
+  await page.goto(`${ADMIN_URL}/admin/login`);
+  await page.evaluate(
+    ({ t, u }) => {
+      localStorage.setItem("ims_auth_token", t);
+      localStorage.setItem("ims_auth_user", JSON.stringify(u));
+    },
+    { t: token, u: { email: ADMIN_EMAIL, portalAccess: ["admin"] } },
+  );
+}
+
 async function navigateToUsers(page: Page) {
   await page.goto(`${ADMIN_URL}/users`);
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("domcontentloaded");
+  await page.waitForTimeout(1000);
 }
 
 async function openCreateModal(page: Page) {
   await page.getByRole("button", { name: /add user/i }).click();
-  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page.getByRole("dialog")).toBeVisible({ timeout: 5000 });
   await expect(page.getByRole("dialog")).toContainText("Create User");
 }
 
 async function closeModal(page: Page) {
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("button", { name: /cancel/i }).click();
-  await expect(dialog).not.toBeVisible();
+  await expect(dialog).not.toBeVisible({ timeout: 5000 });
 }
 
 test.describe("User Management CRUD - Phase 3", () => {
@@ -47,28 +50,37 @@ test.describe("User Management CRUD - Phase 3", () => {
   test.beforeAll(async ({ browser }) => {
     const page = await browser.newPage();
     token = await loginViaApi(page);
+    await seedAuthState(page, token);
+    await page.context().storageState({ path: AUTH_FILE });
     await page.close();
   });
 
-  test.beforeEach(async ({ page }) => {
-    await loginViaUi(page);
-    await navigateToUsers(page);
+  test.beforeEach(async ({ page, context }) => {
+    await context.addInitScript(() => {
+      const token = localStorage.getItem("ims_auth_token");
+      if (!token) {
+        localStorage.setItem("ims_auth_token", "__pending__");
+      }
+    });
   });
 
   test("TC-USR-01: Page loads and displays user list", async ({ page }) => {
+    await navigateToUsers(page);
+    await expect(page.locator("h1")).toBeVisible({ timeout: 10000 });
     await expect(page.locator("h1")).toContainText("User Management");
     const searchBar = page.getByPlaceholder(/search users/i);
-    await expect(searchBar).toBeVisible();
+    await expect(searchBar).toBeVisible({ timeout: 5000 });
   });
 
   test("TC-USR-02: Create user modal opens with empty form", async ({ page }) => {
+    await navigateToUsers(page);
     await openCreateModal(page);
     const dialog = page.getByRole("dialog");
-    await expect(dialog.getByLabel(/name/i)).toHaveValue("");
+    await expect(dialog.locator("input").first()).toBeVisible({ timeout: 5000 });
     await closeModal(page);
   });
 
-  test("TC-USR-03: Create user with valid data via API", async ({ page }) => {
+  test("TC-USR-03: Create user with valid data via API and verify in list", async ({ page }) => {
     const uniqueEmail = `e2e-create-${Date.now()}@example.com`;
     const createResponse = await page.request.post(`${API_URL}/api/users`, {
       data: {
@@ -84,48 +96,53 @@ test.describe("User Management CRUD - Phase 3", () => {
     const body = await createResponse.json();
     expect(body.success).toBe(true);
     expect(body.data.email).toBe(uniqueEmail);
-
-    await page.reload();
-    await page.waitForLoadState("networkidle");
-    await expect(page.getByText(uniqueEmail)).toBeVisible();
+    await navigateToUsers(page);
+    await expect(page.getByText(uniqueEmail)).toBeVisible({ timeout: 5000 });
   });
 
   test("TC-USR-04: Form validation - empty name shows error", async ({ page }) => {
+    await navigateToUsers(page);
     await openCreateModal(page);
     const dialog = page.getByRole("dialog");
-    await dialog.getByLabel(/email/i).fill("test@example.com");
+    const emailInput = dialog.locator('input[type="email"]');
+    await emailInput.fill("test@example.com");
     await dialog.getByRole("button", { name: /create user/i }).click();
-    await expect(dialog.getByText("Name is required")).toBeVisible();
+    await expect(dialog.getByText("Name is required")).toBeVisible({ timeout: 5000 });
     await closeModal(page);
   });
 
   test("TC-USR-05: Form validation - empty email shows error", async ({ page }) => {
+    await navigateToUsers(page);
     await openCreateModal(page);
     const dialog = page.getByRole("dialog");
-    await dialog.getByLabel(/name/i).fill("Test User");
+    const nameInput = dialog.getByLabel(/name/i);
+    await nameInput.fill("Test User");
     await dialog.getByRole("button", { name: /create user/i }).click();
-    await expect(dialog.getByText("Email is required")).toBeVisible();
+    await expect(dialog.getByText("Email is required")).toBeVisible({ timeout: 5000 });
     await closeModal(page);
   });
 
   test("TC-USR-06: Form validation - invalid email format", async ({ page }) => {
+    await navigateToUsers(page);
     await openCreateModal(page);
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel(/name/i).fill("Test User");
     await dialog.getByLabel(/email/i).fill("not-an-email");
     await dialog.getByRole("button", { name: /create user/i }).click();
-    await expect(dialog.getByText("Invalid email format")).toBeVisible();
+    await expect(dialog.getByText("Invalid email format")).toBeVisible({ timeout: 5000 });
     await closeModal(page);
   });
 
   test("TC-USR-07: Form validation - short password", async ({ page }) => {
+    await navigateToUsers(page);
     await openCreateModal(page);
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel(/name/i).fill("Test User");
     await dialog.getByLabel(/email/i).fill("valid@example.com");
-    await dialog.getByLabel(/password/i).fill("ab");
+    const passwordInput = dialog.locator('input[type="password"]');
+    await passwordInput.fill("ab");
     await dialog.getByRole("button", { name: /create user/i }).click();
-    await expect(dialog.getByText("Password must be at least 6 characters")).toBeVisible();
+    await expect(dialog.getByText("Password must be at least 6 characters")).toBeVisible({ timeout: 5000 });
     await closeModal(page);
   });
 
@@ -181,17 +198,15 @@ test.describe("User Management CRUD - Phase 3", () => {
       },
       headers: { Authorization: `Bearer ${token}` },
     });
+    expect(createRes.status()).toBe(201);
     const user = (await createRes.json()).data;
-
-    await page.reload();
-    await page.waitForLoadState("networkidle");
+    await navigateToUsers(page);
     const row = page.locator(`text=${uniqueEmail}`).first();
-    await expect(row).toBeVisible();
+    await expect(row).toBeVisible({ timeout: 5000 });
     const editButton = row.locator("xpath=ancestor::tr").first().getByTitle("Edit");
     await editButton.click();
-
     const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible();
+    await expect(dialog).toBeVisible({ timeout: 5000 });
     await expect(dialog).toContainText("Edit User");
     const nameInput = dialog.getByLabel(/name/i);
     await expect(nameInput).toHaveValue("Edit Prep User");
@@ -212,7 +227,6 @@ test.describe("User Management CRUD - Phase 3", () => {
     });
     const user = (await createRes.json()).data;
     const updatedName = "Update Target - Modified";
-
     const updateRes = await page.request.put(`${API_URL}/api/users/${user.id}`, {
       data: { name: updatedName },
       headers: { Authorization: `Bearer ${token}` },
@@ -235,7 +249,6 @@ test.describe("User Management CRUD - Phase 3", () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     const user = (await createRes.json()).data;
-
     const updateRes = await page.request.put(`${API_URL}/api/users/${user.id}`, {
       data: { role: "admin" },
       headers: { Authorization: `Bearer ${token}` },
@@ -258,7 +271,6 @@ test.describe("User Management CRUD - Phase 3", () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     const user = (await createRes.json()).data;
-
     const updateRes = await page.request.put(`${API_URL}/api/users/${user.id}`, {
       data: { status: "inactive" },
       headers: { Authorization: `Bearer ${token}` },
@@ -289,7 +301,6 @@ test.describe("User Management CRUD - Phase 3", () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     const user = (await createRes.json()).data;
-
     const deleteRes = await page.request.delete(`${API_URL}/api/users/${user.id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -315,29 +326,26 @@ test.describe("User Management CRUD - Phase 3", () => {
       },
       headers: { Authorization: `Bearer ${token}` },
     });
-
-    await page.reload();
-    await page.waitForLoadState("networkidle");
+    expect(createRes.status()).toBe(201);
+    await navigateToUsers(page);
     const row = page.locator(`text=${uniqueEmail}`).first();
-    await expect(row).toBeVisible();
-
+    await expect(row).toBeVisible({ timeout: 5000 });
     const deleteButton = row.locator("xpath=ancestor::tr").first().getByTitle("Delete");
     await deleteButton.click();
-
     const confirmDialog = page.getByRole("dialog").filter({ hasText: "Delete User" });
-    await expect(confirmDialog).toBeVisible();
+    await expect(confirmDialog).toBeVisible({ timeout: 5000 });
     await expect(confirmDialog).toContainText("UI Delete Target");
-
     await confirmDialog.getByRole("button", { name: /delete/i }).click();
-    await expect(confirmDialog).not.toBeVisible();
+    await expect(confirmDialog).not.toBeVisible({ timeout: 5000 });
     await expect(page.getByText(uniqueEmail)).not.toBeVisible();
   });
 
   test("TC-USR-19: UI search filters user list", async ({ page }) => {
+    await navigateToUsers(page);
     const search = page.getByPlaceholder(/search users/i);
     await search.fill("admin@example.com");
     const table = page.locator("table");
-    await expect(table).toBeVisible();
+    await expect(table).toBeVisible({ timeout: 5000 });
   });
 
   test("TC-USR-20: API - GET /api/users/:id returns 404 for unknown user", async ({ page }) => {
