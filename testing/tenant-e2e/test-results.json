@@ -1,0 +1,35 @@
+{
+  "testSuite": "Tenant Management CRUD E2E Tests (MOC-152 Phase 3) - UI Only",
+  "date": "2026-07-09",
+  "tester": "QA Automation Engineer",
+  "framework": "Playwright 1.61.1",
+  "testFile": "tenant-crud.spec.ts",
+  "totalTests": 9,
+  "executed": 0,
+  "passed": 0,
+  "failed": 0,
+  "blocked": 9,
+  "environmentStatus": {
+    "apiServer": "NOT_RUNNING",
+    "adminPortal": "NOT_RUNNING",
+    "postgresql": "NOT_AVAILABLE",
+    "playwrightBrowsers": "MISSING_SYSTEM_DEPS"
+  },
+  "blockers": [
+    "PostgreSQL 16 not running - application API server cannot start",
+    "Missing system libraries for Playwright Chromium (libglib-2.0.so.0) - cannot launch headless browser",
+    "No root access to install system dependencies"
+  ],
+  "notes": "All tests are UI-only using the admin portal (port 3001). Uses auth.setup.ts for browser-based login via /admin/login with admin@example.com / password123. Follows same patterns as MOC-151 user-e2e tests (setup project with storageState, consistent timeouts, reload+wait patterns). Automated execution requires running PostgreSQL + Express API + Admin Portal stack.",
+  "testCases": [
+    { "id": "TC-TN-01", "name": "Page loads and displays tenant list", "status": "BLOCKED", "expected": "Tenant Management heading + search bar visible" },
+    { "id": "TC-TN-02", "name": "Create tenant modal opens with empty form", "status": "BLOCKED", "expected": "Modal with empty name field" },
+    { "id": "TC-TN-03", "name": "Create tenant via UI and verify in list", "status": "BLOCKED", "expected": "New tenant appears in table after reload" },
+    { "id": "TC-TN-04", "name": "Create tenant validation - empty name shows error", "status": "BLOCKED", "expected": "Name is required error in modal" },
+    { "id": "TC-TN-05", "name": "Edit tenant modal pre-fills current data", "status": "BLOCKED", "expected": "Edit modal with pre-filled name field" },
+    { "id": "TC-TN-06", "name": "Update tenant name via UI", "status": "BLOCKED", "expected": "Updated name visible in table" },
+    { "id": "TC-TN-07", "name": "Delete tenant via UI confirmation dialog", "status": "BLOCKED", "expected": "Delete dialog with tenant name + tenant removed" },
+    { "id": "TC-TN-08", "name": "Cancel delete keeps tenant in list", "status": "BLOCKED", "expected": "Tenant remains visible after cancel" },
+    { "id": "TC-TN-09", "name": "Search filters tenant list", "status": "BLOCKED", "expected": "Table filters by search term" }
+  ]
+}

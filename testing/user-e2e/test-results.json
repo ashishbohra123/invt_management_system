@@ -1,0 +1,519 @@
+{
+  "config": {
+    "argv": [
+      "/usr/local/bin/node",
+      "/paperclip/moc-app/node_modules/.bin/playwright",
+      "test",
+      "--list",
+      "--config",
+      "/paperclip/moc-app/testing/user-e2e/playwright.config.ts"
+    ],
+    "configFile": "/paperclip/moc-app/testing/user-e2e/playwright.config.ts",
+    "rootDir": "/paperclip/moc-app/testing/user-e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/paperclip/moc-app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/paperclip/moc-app/testing/user-e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "*.spec.ts"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "playwright-report"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results.json"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.61.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "user-crud.spec.ts",
+      "file": "user-crud.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "User Management CRUD - Phase 3",
+          "file": "user-crud.spec.ts",
+          "line": 44,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC-USR-01: Page loads and displays user list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-ebab3f83ca48ab7a7d93",
+              "file": "user-crud.spec.ts",
+              "line": 58,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-02: Create user modal opens with empty form",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-de83cb49800d97a493eb",
+              "file": "user-crud.spec.ts",
+              "line": 64,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-03: Create user with valid data via API",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-b8bf338b098c75a69e1d",
+              "file": "user-crud.spec.ts",
+              "line": 71,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-04: Form validation - empty name shows error",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-5bf846c430347c2a2335",
+              "file": "user-crud.spec.ts",
+              "line": 93,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-05: Form validation - empty email shows error",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-fa1e288f0ecfe0be82a0",
+              "file": "user-crud.spec.ts",
+              "line": 102,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-06: Form validation - invalid email format",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-b2904c8ca3b3b1302b8a",
+              "file": "user-crud.spec.ts",
+              "line": 111,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-07: Form validation - short password",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-215533d1fb5fcfb96996",
+              "file": "user-crud.spec.ts",
+              "line": 121,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-08: API - duplicate email returns 409",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-13cc72fb7a6d53c74f52",
+              "file": "user-crud.spec.ts",
+              "line": 132,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-09: GET /api/users returns paginated list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-6795a7173bfff6f9d802",
+              "file": "user-crud.spec.ts",
+              "line": 157,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-10: GET /api/users rejects unauthenticated request",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-4953f9715aaa59840c90",
+              "file": "user-crud.spec.ts",
+              "line": 167,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-11: Edit user modal pre-fills with current data via UI",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-9d8d8c33ec7d5c5cbe59",
+              "file": "user-crud.spec.ts",
+              "line": 172,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-12: Update user name via API",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-3b50c0373fd8e111e67a",
+              "file": "user-crud.spec.ts",
+              "line": 201,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-13: Update user role via API",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-56cc9e1758524546674f",
+              "file": "user-crud.spec.ts",
+              "line": 225,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-14: Update user active status via API",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-15893612377d319b251c",
+              "file": "user-crud.spec.ts",
+              "line": 248,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-15: Update non-existent user returns 404",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-20a43c4b757a115054ea",
+              "file": "user-crud.spec.ts",
+              "line": 271,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-16: Delete user via API",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-58844e95233dc6e7fdd5",
+              "file": "user-crud.spec.ts",
+              "line": 279,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-17: Delete non-existent user returns 404",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-c81f15c6788a67cbb7ba",
+              "file": "user-crud.spec.ts",
+              "line": 299,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-18: Delete user via UI confirmation dialog",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-8963402ba76e39503fb8",
+              "file": "user-crud.spec.ts",
+              "line": 306,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-19: UI search filters user list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-4751a451cfe83de15e37",
+              "file": "user-crud.spec.ts",
+              "line": 336,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-20: API - GET /api/users/:id returns 404 for unknown user",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-47b7710027f96b1c7d3c",
+              "file": "user-crud.spec.ts",
+              "line": 343,
+              "column": 7
+            },
+            {
+              "title": "TC-USR-21: Create user with all optional fields via API",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0c51489ba9f6346a8484-575776db313382f008ba",
+              "file": "user-crud.spec.ts",
+              "line": 351,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-07-09T09:49:57.850Z",
+    "duration": 188.9810000000001,
+    "expected": 0,
+    "skipped": 21,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
