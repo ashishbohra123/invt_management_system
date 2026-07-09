@@ -9,10 +9,11 @@ const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD || "password123";
 async function loginViaUi(page: Page) {
   await page.goto(`${ADMIN_URL}/admin/login`);
   await page.waitForLoadState("networkidle");
-  await page.getByLabel(/email/i).fill(ADMIN_EMAIL);
-  await page.getByLabel(/password/i).fill(ADMIN_PASSWORD);
-  await page.getByRole("button", { name: /sign in|login|log in/i }).click();
-  await page.waitForURL(/\/admin\/portal-select|\/users|\/$/);
+  await page.getByPlaceholder("name@company.com").fill(ADMIN_EMAIL);
+  await page.getByPlaceholder("••••••••").fill(ADMIN_PASSWORD);
+  await page.getByRole("button", { name: "Sign In" }).click();
+  await page.waitForURL(/\/admin\/portal-select/);
+  await page.waitForLoadState("networkidle");
 }
 
 async function loginViaApi(page: Page): Promise<string> {
