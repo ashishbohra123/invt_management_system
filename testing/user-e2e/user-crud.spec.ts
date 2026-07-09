@@ -15,9 +15,14 @@ async function loginViaApi(page: Page): Promise<string> {
 }
 
 async function navigateToUsers(page: Page) {
-  await page.goto(`${ADMIN_URL}/users`);
-  await page.waitForLoadState("domcontentloaded");
-  await page.waitForTimeout(1500);
+  await page.goto(`${ADMIN_URL}/users`, { waitUntil: "load", timeout: 15000 });
+  try {
+    await page.waitForURL("**/users", { timeout: 5000 });
+  } catch {
+    // page may already be at /users
+  }
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  await page.waitForSelector("h1", { timeout: 15000 });
 }
 
 async function openCreateModal(page: Page) {
