@@ -1,16 +1,15 @@
 import { test as setup, expect } from "@playwright/test";
 
-const ADMIN_URL = process.env.ADMIN_PORTAL_URL || "http://localhost:3001";
-const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL || "admin@example.com";
-const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD || "password123";
-const authFile = "playwright/.auth/user.json";
+const AUTH_FILE = "playwright/.auth/user.json";
 
 setup("authenticate as admin", async ({ page }) => {
-  await page.goto(`${ADMIN_URL}/admin/login`);
+  const adminUrl = process.env.ADMIN_PORTAL_URL || "http://localhost:3001";
+  await page.goto(`${adminUrl}/admin/login`);
   await page.waitForLoadState("networkidle");
-  await page.getByPlaceholder("name@company.com").fill(ADMIN_EMAIL);
-  await page.getByPlaceholder("••••••••").fill(ADMIN_PASSWORD);
-  await page.getByRole("button", { name: /sign in/i }).click();
-  await page.waitForURL(/\/admin\//, { timeout: 10000 });
-  await page.context().storageState({ path: authFile });
+  await page.locator('input[type="email"]').fill("admin@example.com");
+  await page.locator('input[type="password"]').fill("password123");
+  await page.getByRole("button", { name: "Sign In", exact: true }).click();
+  await page.waitForURL("**/admin/portal-select");
+  await page.waitForLoadState("networkidle");
+  await page.context().storageState({ path: AUTH_FILE });
 });
