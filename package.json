@@ -12,7 +12,7 @@
     "test": "npm run test -ws --if-present",
     "test:user-e2e": "npx playwright test --config=testing/user-e2e/playwright.config.ts --headed",
     "test:tenant-e2e": "npx playwright test --config=testing/tenant-e2e/playwright.config.ts --headed",
-    "test:e2e": "playwright test --config=testing/auth-e2e/playwright.config.ts",
+    "test:e2e": "playwright test --config=testing/auth-e2e/playwright.config.ts --headed",
     "start": "npm run dev"
   },
   "devDependencies": {
