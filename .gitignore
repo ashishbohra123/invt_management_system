@@ -10,3 +10,4 @@ playwright-report/
 *.report/
 testing/**/.auth
 testing/report/
+testing/auth-e2e/test-results/
