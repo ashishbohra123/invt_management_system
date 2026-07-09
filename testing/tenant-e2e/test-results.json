@@ -1,0 +1,43 @@
+{
+  "testSuite": "Tenant Management CRUD E2E Tests (MOC-152 Phase 3)",
+  "date": "2026-07-09",
+  "tester": "QA Automation Engineer",
+  "framework": "Playwright 1.61.1",
+  "testFile": "tenant-crud.spec.ts",
+  "totalTests": 17,
+  "executed": 0,
+  "passed": 0,
+  "failed": 1,
+  "blocked": 16,
+  "environmentStatus": {
+    "apiServer": "NOT_RUNNING",
+    "adminPortal": "NOT_RUNNING",
+    "postgresql": "NOT_AVAILABLE",
+    "playwrightBrowsers": "MISSING_SYSTEM_DEPS"
+  },
+  "blockers": [
+    "PostgreSQL 16 is not running - application API server cannot start",
+    "Missing system libraries for Playwright Chromium (libglib-2.0.so.0) - cannot launch browser in headless mode",
+    "Root access not available to install system dependencies"
+  ],
+  "notes": "Automated E2E test execution requires a running application stack (PostgreSQL + Express API :3000 + Admin Portal :3001). The Playwright test suite (17 test cases covering CRUD operations, validation, and UI interactions) is structurally complete and validated via --list. Each test case maps directly to the tenant CRUD endpoints and admin portal UI components as documented in scope/tenant-module.md.",
+  "testCases": [
+    { "id": "TC-TN-01", "name": "Page loads and displays tenant list", "status": "BLOCKED", "expected": "Tenant Management heading visible, search bar present", "reason": "App stack not running" },
+    { "id": "TC-TN-02", "name": "Create tenant modal opens with empty form", "status": "BLOCKED", "expected": "Modal with empty name field", "reason": "App stack not running" },
+    { "id": "TC-TN-03", "name": "Create tenant with valid data via API", "status": "BLOCKED", "expected": "201 + tenant object in response", "reason": "App stack not running" },
+    { "id": "TC-TN-04", "name": "Create tenant without name returns validation error", "status": "BLOCKED", "expected": "400 + error message", "reason": "App stack not running" },
+    { "id": "TC-TN-05", "name": "Create duplicate tenant returns 409", "status": "BLOCKED", "expected": "409 + conflict error", "reason": "App stack not running" },
+    { "id": "TC-TN-06", "name": "GET /api/tenants returns paginated list", "status": "BLOCKED", "expected": "200 + array of tenants", "reason": "App stack not running" },
+    { "id": "TC-TN-07", "name": "GET /api/tenants rejects unauthenticated request", "status": "BLOCKED", "expected": "401", "reason": "App stack not running" },
+    { "id": "TC-TN-08", "name": "Edit tenant modal pre-fills with current data via UI", "status": "BLOCKED", "expected": "Edit modal with pre-filled fields", "reason": "App stack not running" },
+    { "id": "TC-TN-09", "name": "Update tenant name via API", "status": "BLOCKED", "expected": "200 + updated name", "reason": "App stack not running" },
+    { "id": "TC-TN-10", "name": "Update tenant status to inactive via API", "status": "BLOCKED", "expected": "200 + status=inactive", "reason": "App stack not running" },
+    { "id": "TC-TN-11", "name": "Update non-existent tenant returns 404", "status": "BLOCKED", "expected": "404", "reason": "App stack not running" },
+    { "id": "TC-TN-12", "name": "Delete tenant via API", "status": "BLOCKED", "expected": "204", "reason": "App stack not running" },
+    { "id": "TC-TN-13", "name": "Delete non-existent tenant returns 404", "status": "BLOCKED", "expected": "404", "reason": "App stack not running" },
+    { "id": "TC-TN-14", "name": "Delete tenant via UI confirmation dialog", "status": "BLOCKED", "expected": "Delete dialog + tenant removed from list", "reason": "App stack not running" },
+    { "id": "TC-TN-15", "name": "UI search filters tenant list", "status": "BLOCKED", "expected": "Table filters by search term", "reason": "App stack not running" },
+    { "id": "TC-TN-16", "name": "API - GET /api/tenants/:id returns 404 for unknown tenant", "status": "BLOCKED", "expected": "404", "reason": "App stack not running" },
+    { "id": "TC-TN-17", "name": "API - Update tenant domains", "status": "BLOCKED", "expected": "200 + updated domains array", "reason": "App stack not running" }
+  ]
+}
