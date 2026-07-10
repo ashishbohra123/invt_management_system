@@ -1,14 +1,21 @@
 import { test, expect } from "@playwright/test";
+import {
+  ShopifyHomePage,
+  ShopifyCatalogPage,
+  ShopifyProductPage,
+} from "../pages";
 
 test("browse Brown Shades and extract price on sauce-demo.myshopify.com", async ({ page }) => {
-  await page.goto("https://sauce-demo.myshopify.com/");
+  const homePage = new ShopifyHomePage(page);
+  const catalogPage = new ShopifyCatalogPage(page);
+  const productPage = new ShopifyProductPage(page);
 
-  await page.getByRole("link", { name: /catalog/i }).click();
+  await homePage.goto();
+  await homePage.clickCatalog();
 
-  await page.getByRole("link", { name: /brown shades/i }).click();
+  await catalogPage.clickBrownShades();
 
-  const priceText = await page.locator('[class*="price"]').first().textContent();
-  const price = priceText?.trim() ?? "";
+  const price = await productPage.getPrice();
 
   console.log(`Brown Shades price: ${price}`);
 
