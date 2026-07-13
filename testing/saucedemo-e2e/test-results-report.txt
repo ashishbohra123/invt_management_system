@@ -1,0 +1,33 @@
+========================================================================
+  PLAYWRIGHT EXECUTION REPORT
+  Issue: MOC-179 - PLAYWRIGHT_HEALING
+  Agent: QA Automation Engineer
+  Date: 2026-07-13T06:55:00Z
+  Duration: 17.9s
+  Branch: feature/MOC-169-rebased
+  Browser: Chromium only
+========================================================================
+
+TEST SUITE:
+  Config: testing/saucedemo-e2e/playwright.config.ts
+  Project: chromium
+  Total Tests: 4
+
+RESULTS SUMMARY:
+  Passed:  4
+  Failed:  0
+
+PASSED TESTS:
+  1. [chromium] SauceDemo Login > should login successfully with standard_user
+  2. [chromium] SauceDemo Login > should show error for locked_out_user
+  3. [chromium] SauceDemo Login > should show error with invalid credentials
+  4. [chromium] browse Brown Shades and extract price (£20.00)
+
+FIXES APPLIED:
+  - playwright.config.ts: removed headless: false (was causing browser launch failure)
+  - brown-shades.spec.ts: fixed price selector [class*="priceval"] -> [class*="price"]
+  - brown-shades.spec.ts: added waitForLoadState/waitForURL for reliable navigation
+
+========================================================================
+  End of Report
+========================================================================
