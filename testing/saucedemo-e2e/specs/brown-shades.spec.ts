@@ -15,4 +15,9 @@ test("browse Brown Shades and extract price on sauce-demo.myshopify.com", async 
   console.log(`Brown Shades price: ${price}`);
 
   expect(price).toContain("£");
+
+  await page.screenshot({
+    path: "screenshots/brown-shades.png",
+    fullPage: true,
+  });
 });
