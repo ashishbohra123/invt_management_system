@@ -7,7 +7,7 @@ test("browse Brown Shades and extract price on sauce-demo.myshopify.com", async 
 
   await page.getByRole("link", { name: /brown shades/i }).click();
 
-  const priceText = await page.locator('[class*="price"]').first().textContent();
+  const priceText = await page.locator('[class*="priceval"]').first().textContent();
   const price = priceText?.trim() ?? "";
 
   console.log(`Brown Shades price: ${price}`);
